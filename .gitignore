@@ -1,0 +1,15 @@
+.tools/
+bin/
+obj/
+.vs/
+.idea/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+[Dd]ebug/
+[Rr]elease/
+.DS_Store
+*.nupkg
+project.lock.json
+artifacts/
