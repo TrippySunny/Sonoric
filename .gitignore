@@ -13,3 +13,4 @@ obj/
 *.nupkg
 project.lock.json
 artifacts/
+dist/

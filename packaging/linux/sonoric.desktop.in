@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Sonoric
+Comment=Offline audio player
+Exec=@EXEC@
+Icon=@ICON@
+Terminal=false
+Categories=AudioVideo;Player;Audio;
+StartupWMClass=Sonoric
+MimeType=audio/mpeg;audio/flac;audio/ogg;audio/x-wav;audio/mp4;

@@ -1,0 +1,678 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:Sonoric.ViewModels"
+        x:Class="Sonoric.Views.MainWindow"
+        x:DataType="vm:MainViewModel"
+        Title="Sonoric"
+        Width="1280"
+        Height="800"
+        MinWidth="960"
+        MinHeight="600"
+        Background="#000000"
+        TransparencyLevelHint="None"
+        WindowStartupLocation="CenterScreen"
+        DragDrop.AllowDrop="True">
+    <Window.Resources>
+        <DataTemplate x:Key="TrackRowTemplate" x:DataType="vm:TrackItem">
+            <Border Padding="12,10,22,10" Background="Transparent">
+                <Border.ContextFlyout>
+                    <MenuFlyout>
+                        <MenuItem Header="{Binding FavoriteMenuText}"
+                                  Command="{Binding ToggleFavoriteCommand}"/>
+                        <MenuItem Header="Настроение"
+                                  ItemsSource="{Binding TagToggles}">
+                            <MenuItem.ItemContainerTheme>
+                                <ControlTheme TargetType="MenuItem"
+                                              x:DataType="vm:MoodTagToggle"
+                                              BasedOn="{StaticResource {x:Type MenuItem}}">
+                                    <Setter Property="Header" Value="{Binding Name}"/>
+                                    <Setter Property="ToggleType" Value="CheckBox"/>
+                                    <Setter Property="IsChecked" Value="{Binding IsSelected, Mode=TwoWay}"/>
+                                    <Setter Property="StaysOpenOnClick" Value="True"/>
+                                </ControlTheme>
+                            </MenuItem.ItemContainerTheme>
+                        </MenuItem>
+                        <MenuItem Header="Удалить файл"
+                                  Command="{Binding DeleteCommand}"/>
+                    </MenuFlyout>
+                </Border.ContextFlyout>
+                <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto">
+                    <Button Classes="track-play-button"
+                            Command="{Binding PlayCommand}"
+                            VerticalAlignment="Center"
+                            Margin="0,0,8,0">
+                        <Panel Width="14" Height="14">
+                            <Viewbox Width="12" Height="12" IsVisible="{Binding !IsCurrentPlaying}">
+                                <Path Fill="#FFFFFF" Data="M 0,0 L 0,16 L 14,8 Z"/>
+                            </Viewbox>
+                            <StackPanel Orientation="Horizontal"
+                                        Spacing="3"
+                                        IsVisible="{Binding IsCurrentPlaying}"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center">
+                                <Rectangle Width="3" Height="12" Fill="#FFFFFF"/>
+                                <Rectangle Width="3" Height="12" Fill="#FFFFFF"/>
+                            </StackPanel>
+                        </Panel>
+                    </Button>
+                    <StackPanel Grid.Column="1" Spacing="4">
+                        <TextBlock Text="{Binding Title}"
+                                   FontSize="14"
+                                   FontWeight="Medium"
+                                   TextTrimming="CharacterEllipsis"/>
+                        <TextBlock Text="{Binding Subtitle}"
+                                   FontSize="12"
+                                   Foreground="#8A8A8A"
+                                   TextTrimming="CharacterEllipsis"/>
+                    </StackPanel>
+                    <ItemsControl Grid.Column="2"
+                                  ItemsSource="{Binding AssignedDots}"
+                                  IsVisible="{Binding HasAssignedDots}"
+                                  VerticalAlignment="Center"
+                                  Margin="8,0,8,0">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal" Spacing="4"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="vm:MoodDot">
+                                <Ellipse Width="10"
+                                         Height="10"
+                                         Fill="{Binding Accent}"
+                                         ToolTip.Tip="{Binding Tooltip}"
+                                         ToolTip.ShowDelay="400"/>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <TextBlock Grid.Column="3"
+                               Text="{Binding Extension}"
+                               FontSize="11"
+                               Foreground="#6A6A6A"
+                               VerticalAlignment="Center"
+                               Margin="4,0,4,0"/>
+                    <Button Grid.Column="4"
+                            Classes="favorite-button"
+                            Command="{Binding ToggleFavoriteCommand}"
+                            VerticalAlignment="Center"
+                            Margin="4,0,0,0">
+                        <Panel Width="16" Height="16">
+                            <Path Stretch="Uniform"
+                                  Data="M 8,1.5 L 9.9,6.1 L 14.9,6.4 L 11.1,9.6 L 12.3,14.5 L 8,11.9 L 3.7,14.5 L 4.9,9.6 L 1.1,6.4 L 6.1,6.1 Z"
+                                  Fill="#3A3A3A"
+                                  IsVisible="{Binding !IsFavorite}"/>
+                            <Path Stretch="Uniform"
+                                  Data="M 8,1.5 L 9.9,6.1 L 14.9,6.4 L 11.1,9.6 L 12.3,14.5 L 8,11.9 L 3.7,14.5 L 4.9,9.6 L 1.1,6.4 L 6.1,6.1 Z"
+                                  Fill="#FFFFFF"
+                                  IsVisible="{Binding IsFavorite}"/>
+                        </Panel>
+                    </Button>
+                </Grid>
+            </Border>
+        </DataTemplate>
+        <DataTemplate x:Key="CollectionTileTemplate" x:DataType="vm:CollectionItem">
+            <Button Classes="album-tile"
+                    Command="{Binding OpenCommand}"
+                    ToolTip.Tip="{Binding TooltipText}"
+                    ToolTip.ShowDelay="2000"
+                    ToolTip.Placement="Pointer">
+                <Button.ContextFlyout>
+                    <MenuFlyout>
+                        <MenuItem Header="Посмотреть обложку"
+                                  Command="{Binding PreviewCoverCommand}"
+                                  IsEnabled="{Binding HasCover}"/>
+                        <MenuItem Header="Изменить" Command="{Binding EditCommand}"/>
+                        <MenuItem Header="Удалить" Command="{Binding DeleteCommand}"/>
+                    </MenuFlyout>
+                </Button.ContextFlyout>
+                <Viewbox Stretch="Uniform">
+                    <Border Width="200"
+                            Height="200"
+                            Background="#0A0A0A"
+                            ClipToBounds="True">
+                        <Panel>
+                            <TextBlock Text="♪"
+                                       FontSize="56"
+                                       Foreground="#3A3A3A"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"
+                                       IsVisible="{Binding !HasCover}"/>
+                            <Image Source="{Binding Cover}"
+                                   Stretch="UniformToFill"
+                                   IsVisible="{Binding HasCover}"/>
+                        </Panel>
+                    </Border>
+                </Viewbox>
+            </Button>
+        </DataTemplate>
+    </Window.Resources>
+    <Panel>
+    <DockPanel>
+        <Border DockPanel.Dock="Bottom"
+                Height="118"
+                Background="#000000"
+                BorderBrush="#2A2A2A"
+                BorderThickness="0,1,0,0"
+                Padding="20,10,20,10"
+                ClipToBounds="True">
+            <DockPanel>
+                <Grid DockPanel.Dock="Top"
+                      ColumnDefinitions="Auto,*,Auto"
+                      ColumnSpacing="16"
+                      Margin="0,0,0,12">
+                    <TextBlock Text="{Binding ElapsedText}"
+                               VerticalAlignment="Center"
+                               FontSize="12"
+                               Foreground="#8A8A8A"
+                               Width="52"/>
+                    <Slider x:Name="TimelineSlider"
+                            Grid.Column="1"
+                            Minimum="0"
+                            Maximum="{Binding DurationSeconds}"
+                            Value="{Binding PositionSeconds, Mode=OneWay}"
+                            VerticalAlignment="Center"
+                            IsEnabled="{Binding CanControlPlayback}"
+                            PointerPressed="OnTimelinePressed"
+                            PointerReleased="OnTimelineReleased"
+                            PointerCaptureLost="OnTimelineCaptureLost"
+                            ValueChanged="OnTimelineValueChanged"/>
+                    <TextBlock Grid.Column="2"
+                               Text="{Binding RemainingText}"
+                               VerticalAlignment="Center"
+                               FontSize="12"
+                               Foreground="#8A8A8A"
+                               Width="52"
+                               TextAlignment="Right"/>
+                </Grid>
+                <Grid ColumnDefinitions="*,Auto,*">
+                    <Panel/>
+                    <StackPanel Grid.Column="1"
+                                Orientation="Horizontal"
+                                Spacing="10"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center">
+                        <Button Classes="skip-button" Command="{Binding SkipPreviousCommand}">
+                            <Viewbox Width="16" Height="16">
+                                <Canvas Width="20" Height="16">
+                                    <Rectangle Fill="#000000" Width="3" Height="16"/>
+                                    <Path Fill="#000000" Data="M 20,0 L 20,16 L 6,8 Z"/>
+                                </Canvas>
+                            </Viewbox>
+                        </Button>
+                        <Button Classes="play-button"
+                                Background="#FFFFFF"
+                                Foreground="#000000"
+                                Command="{Binding TogglePlayPauseCommand}">
+                            <Panel>
+                                <Viewbox Width="14" Height="14" IsVisible="{Binding !IsPlaying}">
+                                    <Path Fill="#000000" Data="M 0,0 L 0,16 L 14,8 Z"/>
+                                </Viewbox>
+                                <StackPanel Orientation="Horizontal"
+                                            Spacing="4"
+                                            IsVisible="{Binding IsPlaying}"
+                                            VerticalAlignment="Center">
+                                    <Rectangle Width="4" Height="14" Fill="#000000"/>
+                                    <Rectangle Width="4" Height="14" Fill="#000000"/>
+                                </StackPanel>
+                            </Panel>
+                        </Button>
+                        <Button Classes="skip-button" Command="{Binding SkipNextCommand}">
+                            <Viewbox Width="16" Height="16">
+                                <Canvas Width="20" Height="16">
+                                    <Path Fill="#000000" Data="M 0,0 L 0,16 L 14,8 Z"/>
+                                    <Rectangle Fill="#000000" Width="3" Height="16" Canvas.Left="17"/>
+                                </Canvas>
+                            </Viewbox>
+                        </Button>
+                    </StackPanel>
+                    <Border Grid.Column="2"
+                            Width="112"
+                            Padding="8,0"
+                            HorizontalAlignment="Right"
+                            VerticalAlignment="Center"
+                            ClipToBounds="True">
+                        <Slider Classes="volume-slider"
+                                Minimum="0"
+                                Maximum="100"
+                                Value="{Binding Volume}"/>
+                    </Border>
+                </Grid>
+            </DockPanel>
+        </Border>
+
+        <Border DockPanel.Dock="Top"
+                Height="64"
+                Background="#000000"
+                BorderBrush="#2A2A2A"
+                BorderThickness="0,0,0,1"
+                Padding="20,0">
+            <Grid ColumnDefinitions="*,Auto">
+                <TextBlock Text="SONORIC"
+                           FontSize="18"
+                           FontWeight="SemiBold"
+                           LetterSpacing="4"
+                           VerticalAlignment="Center"
+                           Foreground="#FFFFFF"/>
+                <Button Grid.Column="1"
+                        Classes="app-button"
+                        Content="Импорт"
+                        Command="{Binding ImportFilesCommand}"
+                        VerticalAlignment="Center"/>
+            </Grid>
+        </Border>
+
+        <Grid ColumnDefinitions="520,*">
+            <Border Background="#0A0A0A"
+                    BorderBrush="#2A2A2A"
+                    BorderThickness="0,0,1,0"
+                    DragDrop.AllowDrop="True">
+                <DockPanel>
+                    <Border DockPanel.Dock="Top"
+                            Padding="16,14,16,10"
+                            BorderBrush="#2A2A2A"
+                            BorderThickness="0,0,0,1">
+                        <StackPanel Spacing="10">
+                            <WrapPanel>
+                                <Button Classes="tab-chip"
+                                        Classes.selected="{Binding IsAllSection}"
+                                        Content="Все файлы"
+                                        Command="{Binding ShowAllCommand}"/>
+                                <Button Classes="tab-chip"
+                                        Classes.selected="{Binding IsFavoritesSection}"
+                                        Content="Избранные песни"
+                                        Command="{Binding ShowFavoritesCommand}"/>
+                                <Button Classes="tab-chip"
+                                        Classes.selected="{Binding IsAlbumsSection}"
+                                        Content="Альбомы"
+                                        Command="{Binding ShowAlbumsCommand}"/>
+                                <Button Classes="tab-chip"
+                                        Classes.selected="{Binding IsPlaylistsSection}"
+                                        Content="Плейлисты"
+                                        Command="{Binding ShowPlaylistsCommand}"/>
+                                <Button Classes="tab-chip"
+                                        Classes.selected="{Binding IsTagsSection}"
+                                        Content="Теги"
+                                        Command="{Binding ShowTagsCommand}"/>
+                            </WrapPanel>
+                            <TextBox Text="{Binding SearchQuery, Mode=TwoWay}"
+                                     Watermark="Поиск файла или альбома"
+                                     IsVisible="{Binding IsFilterBarVisible}"/>
+                            <StackPanel Orientation="Horizontal"
+                                        HorizontalAlignment="Left"
+                                        Spacing="6"
+                                        IsVisible="{Binding IsFilterBarVisible}">
+                                <ComboBox Classes="filter-combo"
+                                          MinWidth="88"
+                                          ItemsSource="{Binding TypeFilterOptions}"
+                                          SelectedIndex="{Binding TypeFilterIndex, Mode=TwoWay}"/>
+                                <ComboBox Classes="filter-combo"
+                                          MinWidth="148"
+                                          ItemsSource="{Binding SortOptions}"
+                                          SelectedIndex="{Binding SortIndex, Mode=TwoWay}"/>
+                                <Button Classes="app-button"
+                                        Content="{Binding SortDirectionLabel}"
+                                        Command="{Binding ToggleSortDirectionCommand}"
+                                        MinWidth="56"
+                                        Padding="10,8"/>
+                                <Button Classes="app-button"
+                                        Content="{Binding MoodFilterLabel}"
+                                        MinWidth="120"
+                                        Padding="10,8">
+                                    <Button.Flyout>
+                                        <Flyout Placement="BottomEdgeAlignedLeft">
+                                            <StackPanel Width="320" Margin="4">
+                                                <TextBlock Text="Нет тегов. Создайте их во вкладке «Теги»."
+                                                           Foreground="#8A8A8A"
+                                                           TextWrapping="Wrap"
+                                                           IsVisible="{Binding !HasCustomTags}"/>
+                                                <ItemsControl ItemsSource="{Binding MoodFilters}"
+                                                              IsVisible="{Binding HasCustomTags}">
+                                                <ItemsControl.ItemsPanel>
+                                                    <ItemsPanelTemplate>
+                                                        <WrapPanel/>
+                                                    </ItemsPanelTemplate>
+                                                </ItemsControl.ItemsPanel>
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate x:DataType="vm:MoodFilterChip">
+                                                        <Button Classes="mood-chip"
+                                                                Command="{Binding ToggleCommand}"
+                                                                Background="{Binding DisplayBackground}"
+                                                                BorderBrush="{Binding Accent}"
+                                                                Foreground="{Binding DisplayForeground}">
+                                                            <TextBlock Text="{Binding Name}"
+                                                                       FontSize="11"
+                                                                       Foreground="{Binding DisplayForeground}"/>
+                                                        </Button>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                            </StackPanel>
+                                        </Flyout>
+                                    </Button.Flyout>
+                                </Button>
+                            </StackPanel>
+                            <Button Classes="app-button"
+                                    Content="{Binding CreateLabel}"
+                                    Command="{Binding CreateCollectionCommand}"
+                                    IsVisible="{Binding IsCreateVisible}"
+                                    HorizontalAlignment="Left"/>
+                            <TextBlock Text="{Binding StatusText}"
+                                       FontSize="12"
+                                       Foreground="#8A8A8A"/>
+                        </StackPanel>
+                    </Border>
+                    <Panel>
+                        <ListBox ItemsSource="{Binding VisibleTracks}"
+                                 SelectedItem="{Binding SelectedTrack}"
+                                 Background="Transparent"
+                                 IsVisible="{Binding IsTrackListVisible}"
+                                 ItemTemplate="{StaticResource TrackRowTemplate}"
+                                 ScrollViewer.AllowAutoHide="False"
+                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                 DoubleTapped="OnTrackListDoubleTapped"/>
+                        <ScrollViewer IsVisible="{Binding IsAlbumGridVisible}" Padding="8,4">
+                            <ItemsControl ItemsSource="{Binding Albums}"
+                                          ItemTemplate="{StaticResource CollectionTileTemplate}"
+                                          VerticalAlignment="Top">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <UniformGrid Columns="3" VerticalAlignment="Top"/>
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                            </ItemsControl>
+                        </ScrollViewer>
+                        <ScrollViewer IsVisible="{Binding IsPlaylistListVisible}" Padding="8,4">
+                            <ItemsControl ItemsSource="{Binding Playlists}"
+                                          ItemTemplate="{StaticResource CollectionTileTemplate}"
+                                          VerticalAlignment="Top">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <UniformGrid Columns="3" VerticalAlignment="Top"/>
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                            </ItemsControl>
+                        </ScrollViewer>
+                        <ScrollViewer IsVisible="{Binding IsTagListVisible}" Padding="16,12">
+                            <StackPanel Spacing="14">
+                                <TextBlock Text="{Binding TagSaveLabel}"
+                                           FontSize="16"
+                                           FontWeight="SemiBold"/>
+                                <TextBox Text="{Binding TagName}"
+                                         Watermark="Название тега"/>
+                                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="16">
+                                    <Border Width="72"
+                                            Height="72"
+                                            Background="{Binding TagPreview}"
+                                            BorderBrush="#2A2A2A"
+                                            BorderThickness="1"
+                                            CornerRadius="6"/>
+                                    <StackPanel Grid.Column="1" Spacing="8">
+                                        <Grid ColumnDefinitions="20,*" ColumnSpacing="8">
+                                            <TextBlock Text="R" VerticalAlignment="Center" Foreground="#8A8A8A"/>
+                                            <Slider Grid.Column="1"
+                                                    Minimum="0"
+                                                    Maximum="255"
+                                                    Value="{Binding TagRed}"/>
+                                        </Grid>
+                                        <Grid ColumnDefinitions="20,*" ColumnSpacing="8">
+                                            <TextBlock Text="G" VerticalAlignment="Center" Foreground="#8A8A8A"/>
+                                            <Slider Grid.Column="1"
+                                                    Minimum="0"
+                                                    Maximum="255"
+                                                    Value="{Binding TagGreen}"/>
+                                        </Grid>
+                                        <Grid ColumnDefinitions="20,*" ColumnSpacing="8">
+                                            <TextBlock Text="B" VerticalAlignment="Center" Foreground="#8A8A8A"/>
+                                            <Slider Grid.Column="1"
+                                                    Minimum="0"
+                                                    Maximum="255"
+                                                    Value="{Binding TagBlue}"/>
+                                        </Grid>
+                                        <TextBox Text="{Binding TagHex}"
+                                                 Watermark="#RRGGBB"/>
+                                    </StackPanel>
+                                </Grid>
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <Button Classes="app-button"
+                                            Content="{Binding TagSaveLabel}"
+                                            Command="{Binding SaveTagCommand}"/>
+                                    <Button Classes="app-button"
+                                            Content="Отмена"
+                                            Command="{Binding CancelTagEditCommand}"
+                                            IsVisible="{Binding IsEditingTag}"/>
+                                </StackPanel>
+                                <TextBlock Text="{Binding TagValidationMessage}"
+                                           Foreground="#C8C8C8"/>
+                                <TextBlock Text="Мои теги"
+                                           FontSize="14"
+                                           FontWeight="SemiBold"
+                                           Margin="0,8,0,0"/>
+                                <ItemsControl ItemsSource="{Binding CustomTags}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate x:DataType="vm:TagListItem">
+                                            <Border Padding="0,8">
+                                                <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="8">
+                                                    <Ellipse Width="16"
+                                                             Height="16"
+                                                             Fill="{Binding Accent}"
+                                                             VerticalAlignment="Center"/>
+                                                    <TextBlock Grid.Column="1"
+                                                               Text="{Binding Name}"
+                                                               VerticalAlignment="Center"
+                                                               TextTrimming="CharacterEllipsis"/>
+                                                    <Button Grid.Column="2"
+                                                            Classes="app-button"
+                                                            Content="Изменить"
+                                                            Command="{Binding EditCommand}"
+                                                            Padding="10,6"/>
+                                                    <Button Grid.Column="3"
+                                                            Classes="app-button"
+                                                            Content="Удалить"
+                                                            Command="{Binding DeleteCommand}"
+                                                            Padding="10,6"/>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                                <TextBlock Text="Пока нет своих тегов"
+                                           Foreground="#6A6A6A"
+                                           IsVisible="{Binding !HasCustomTags}"/>
+                            </StackPanel>
+                        </ScrollViewer>
+                        <TextBlock Text="{Binding EmptyListText}"
+                                   IsVisible="{Binding IsTrackListEmpty}"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"
+                                   Foreground="#6A6A6A"/>
+                    </Panel>
+                </DockPanel>
+            </Border>
+
+            <Border Grid.Column="1" Background="#000000">
+                <Panel>
+                    <StackPanel HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                Spacing="18"
+                                Width="420"
+                                IsVisible="{Binding !IsCollectionOpen}">
+                        <Border Width="280"
+                                Height="280"
+                                Background="#111111"
+                                BorderBrush="#2A2A2A"
+                                BorderThickness="1"
+                                CornerRadius="6"
+                                ClipToBounds="True"
+                                HorizontalAlignment="Center">
+                            <Panel>
+                                <TextBlock Text="♪"
+                                           FontSize="72"
+                                           Foreground="#3A3A3A"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           IsVisible="{Binding !HasCover}"/>
+                                <Image Source="{Binding NowPlayingCover}"
+                                       Stretch="UniformToFill"
+                                       IsVisible="{Binding HasCover}"/>
+                            </Panel>
+                        </Border>
+                        <StackPanel Spacing="6" HorizontalAlignment="Center">
+                            <TextBlock Text="{Binding NowPlayingTitle}"
+                                       FontSize="26"
+                                       FontWeight="SemiBold"
+                                       TextAlignment="Center"
+                                       TextWrapping="Wrap"/>
+                            <TextBlock Text="{Binding NowPlayingArtist}"
+                                       FontSize="16"
+                                       Foreground="#8A8A8A"
+                                       TextAlignment="Center"
+                                       TextWrapping="Wrap"/>
+                            <TextBlock Text="{Binding NowPlayingAlbum}"
+                                       FontSize="13"
+                                       Foreground="#6A6A6A"
+                                       TextAlignment="Center"
+                                       TextWrapping="Wrap"
+                                       IsVisible="{Binding NowPlayingAlbum, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                            <Border Background="#141414"
+                                    BorderBrush="#2A2A2A"
+                                    BorderThickness="1"
+                                    Padding="10,4"
+                                    CornerRadius="4"
+                                    HorizontalAlignment="Center"
+                                    Margin="0,8,0,0"
+                                    IsVisible="{Binding NowPlayingFormat, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                                <TextBlock Text="{Binding NowPlayingFormat}"
+                                           FontSize="11"
+                                           Foreground="#C8C8C8"
+                                           LetterSpacing="1"/>
+                            </Border>
+                        </StackPanel>
+                    </StackPanel>
+                    <DockPanel Margin="28,20,28,16" IsVisible="{Binding IsCollectionOpen}">
+                        <Grid DockPanel.Dock="Top"
+                              ColumnDefinitions="Auto,*"
+                              ColumnSpacing="24"
+                              Margin="0,0,0,20">
+                            <Border Width="220"
+                                    Height="220"
+                                    Background="#111111"
+                                    BorderBrush="#2A2A2A"
+                                    BorderThickness="1"
+                                    CornerRadius="6"
+                                    ClipToBounds="True">
+                                <Panel>
+                                    <TextBlock Text="♪"
+                                               FontSize="64"
+                                               Foreground="#3A3A3A"
+                                               HorizontalAlignment="Center"
+                                               VerticalAlignment="Center"
+                                               IsVisible="{Binding !OpenedCollectionHasCover}"/>
+                                    <Image Source="{Binding OpenedCollectionCover}"
+                                           Stretch="UniformToFill"
+                                           IsVisible="{Binding OpenedCollectionHasCover}"/>
+                                    <Button Classes="cover-button"
+                                            Command="{Binding OpenOpenedCollectionCoverCommand}"
+                                            IsVisible="{Binding OpenedCollectionHasCover}"
+                                            ToolTip.Tip="Нажмите, чтобы увеличить"
+                                            HorizontalAlignment="Stretch"
+                                            VerticalAlignment="Stretch"/>
+                                </Panel>
+                            </Border>
+                            <DockPanel Grid.Column="1">
+                                <StackPanel DockPanel.Dock="Top"
+                                            Orientation="Horizontal"
+                                            Spacing="8"
+                                            HorizontalAlignment="Right">
+                                    <Button Classes="app-button"
+                                            Content="Изменить"
+                                            Command="{Binding EditOpenedCollectionCommand}"/>
+                                    <Button Classes="app-button"
+                                            Content="Закрыть"
+                                            Command="{Binding CloseCollectionCommand}"/>
+                                </StackPanel>
+                                <StackPanel VerticalAlignment="Center" Spacing="8">
+                                    <TextBlock Text="{Binding OpenedCollectionKindLabel}"
+                                               FontSize="12"
+                                               Foreground="#8A8A8A"/>
+                                    <TextBlock Text="{Binding OpenedCollectionTitle}"
+                                               FontSize="32"
+                                               FontWeight="SemiBold"
+                                               TextWrapping="Wrap"/>
+                                    <TextBlock Text="{Binding OpenedCollectionAuthor}"
+                                               FontSize="16"
+                                               Foreground="#C8C8C8"
+                                               TextWrapping="Wrap"
+                                               IsVisible="{Binding HasOpenedAuthor}"/>
+                                    <TextBlock Text="{Binding OpenedCollectionYearText}"
+                                               FontSize="14"
+                                               Foreground="#8A8A8A"
+                                               IsVisible="{Binding HasOpenedYear}"/>
+                                    <TextBlock Text="{Binding OpenedCollectionDescription}"
+                                               FontSize="13"
+                                               Foreground="#8A8A8A"
+                                               TextWrapping="Wrap"
+                                               IsVisible="{Binding HasOpenedDescription}"/>
+                                    <TextBlock Text="{Binding OpenedCollectionCountText}"
+                                               FontSize="13"
+                                               Foreground="#6A6A6A"/>
+                                </StackPanel>
+                            </DockPanel>
+                        </Grid>
+                        <Panel>
+                            <ListBox ItemsSource="{Binding CollectionTracks}"
+                                     SelectedItem="{Binding SelectedCollectionTrack}"
+                                     Background="Transparent"
+                                     ItemTemplate="{StaticResource TrackRowTemplate}"
+                                     ScrollViewer.AllowAutoHide="False"
+                                     ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                     DoubleTapped="OnCollectionTrackListDoubleTapped"/>
+                            <TextBlock Text="В наборе нет треков"
+                                       IsVisible="{Binding IsCollectionTracksEmpty}"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"
+                                       Foreground="#6A6A6A"/>
+                        </Panel>
+                    </DockPanel>
+                </Panel>
+            </Border>
+        </Grid>
+    </DockPanel>
+    <Panel IsVisible="{Binding IsCoverViewerOpen}"
+           Background="#F2000000"
+           PointerPressed="OnCoverViewerBackdropPressed"
+           PointerWheelChanged="OnCoverViewerWheel">
+        <Panel Margin="36,48,36,56" ClipToBounds="True">
+            <Image Source="{Binding CoverViewerImage}"
+                   Stretch="Uniform"
+                   HorizontalAlignment="Center"
+                   VerticalAlignment="Center"
+                   RenderTransformOrigin="0.5,0.5"
+                   Cursor="SizeAll"
+                   PointerPressed="OnCoverViewerImagePressed"
+                   PointerMoved="OnCoverViewerImageMoved"
+                   PointerReleased="OnCoverViewerImageReleased"
+                   PointerCaptureLost="OnCoverViewerCaptureLost">
+                <Image.RenderTransform>
+                    <TransformGroup>
+                        <ScaleTransform ScaleX="{Binding CoverViewerZoom}" ScaleY="{Binding CoverViewerZoom}"/>
+                        <TranslateTransform X="{Binding CoverViewerOffsetX}" Y="{Binding CoverViewerOffsetY}"/>
+                    </TransformGroup>
+                </Image.RenderTransform>
+            </Image>
+        </Panel>
+        <Button Classes="app-button"
+                Content="Закрыть"
+                Command="{Binding CloseCoverViewerCommand}"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Top"
+                Margin="20"/>
+        <TextBlock Text="Колёсико — масштаб · перетащите, чтобы подвинуть · Esc — закрыть"
+                   HorizontalAlignment="Center"
+                   VerticalAlignment="Bottom"
+                   Margin="0,0,0,18"
+                   FontSize="12"
+                   Foreground="#8A8A8A"
+                   IsHitTestVisible="False"/>
+    </Panel>
+    </Panel>
+</Window>
