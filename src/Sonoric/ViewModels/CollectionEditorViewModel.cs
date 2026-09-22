@@ -10,17 +10,20 @@ namespace Sonoric.ViewModels;
 public partial class CollectionEditorViewModel : ObservableObject
 {
     private readonly IFileDialogService _dialogs;
+    private readonly LibraryService _library;
     private readonly List<TrackChoice> _libraryOrder = new();
     private Bitmap? _preview;
     private bool _clearCover;
 
     public CollectionEditorViewModel(
         IFileDialogService dialogs,
+        LibraryService library,
         IEnumerable<TrackItem> tracks,
         CollectionKind defaultKind,
         CollectionRecord? existing)
     {
         _dialogs = dialogs;
+        _library = library;
         ExistingId = existing?.Id ?? Guid.NewGuid().ToString("N");
         IsNew = existing is null;
         TitleText = existing?.Title ?? string.Empty;
@@ -174,6 +177,33 @@ public partial class CollectionEditorViewModel : ObservableObject
     private void ShowSelectedTab()
     {
         IsLibraryTab = false;
+    }
+
+    [RelayCommand]
+    private async Task ImportFilesAsync()
+    {
+        var paths = await _dialogs.PickAudioFilesAsync();
+        if (paths.Count == 0)
+        {
+            return;
+        }
+
+        var records = _library.ResolveAndImport(paths);
+        foreach (var record in records)
+        {
+            var existing = Choices.FirstOrDefault(choice => choice.Track.Id == record.Id);
+            if (existing is null)
+            {
+                var item = new TrackItem(record, _library.GetTrackPath(record), _library.GetCoverPath(record));
+                AddChoice(item, isSelected: true);
+                continue;
+            }
+
+            existing.IsSelected = true;
+        }
+
+        IsLibraryTab = false;
+        RefreshLists();
     }
 
     [RelayCommand]

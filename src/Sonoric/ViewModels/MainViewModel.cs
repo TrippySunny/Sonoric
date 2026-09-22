@@ -487,6 +487,17 @@ public partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private async Task ImportOpenedCollectionAsync()
+    {
+        if (OpenedCollection is null)
+        {
+            return;
+        }
+
+        await ImportIntoCollectionAsync(OpenedCollection.Id);
+    }
+
+    [RelayCommand]
     private async Task CreateCollectionAsync()
     {
         var kind = Section == LibrarySection.Albums ? CollectionKind.Album : CollectionKind.Playlist;
@@ -599,6 +610,26 @@ public partial class MainViewModel : ObservableObject
         }
     }
 
+    public async Task ImportPathsIntoCollectionAsync(string collectionId, IEnumerable<string> paths)
+    {
+        var (saved, added) = await Task.Run(() => _library.AddTracksToCollection(collectionId, paths));
+        if (saved is null)
+        {
+            return;
+        }
+
+        ReloadLibrary(_settings.LastTrackId);
+        var opened = _collectionCache.FirstOrDefault(item => item.Id == saved.Id);
+        if (opened is not null)
+        {
+            OpenCollection(opened);
+        }
+
+        StatusText = added == 0
+            ? "Нет новых треков для набора"
+            : added == 1 ? "В набор добавлен 1 трек" : $"В набор добавлено {added} треков";
+    }
+
     public void BeginSeek()
     {
         _isSeeking = true;
@@ -651,7 +682,7 @@ public partial class MainViewModel : ObservableObject
 
     private async Task EditCollectionAsync(CollectionRecord? existing, CollectionKind defaultKind)
     {
-        var editor = new CollectionEditorViewModel(_dialogs, AllTracks, defaultKind, existing);
+        var editor = new CollectionEditorViewModel(_dialogs, _library, AllTracks, defaultKind, existing);
         if (!await _collectionDialogs.EditAsync(editor))
         {
             return;
@@ -734,6 +765,7 @@ public partial class MainViewModel : ObservableObject
             {
                 OpenRequested = OpenCollection,
                 PreviewCoverRequested = OpenCollectionCover,
+                ImportRequested = OnImportCollection,
                 EditRequested = OnEditCollection,
                 DeleteRequested = OnDeleteCollection
             };
@@ -786,6 +818,17 @@ public partial class MainViewModel : ObservableObject
         OpenedCollectionCountText = item.CountText;
         OpenedCollectionCover = item.Cover;
         OpenedCollectionHasCover = item.HasCover;
+    }
+
+    private void OnImportCollection(CollectionItem item)
+    {
+        _ = ImportIntoCollectionAsync(item.Id);
+    }
+
+    private async Task ImportIntoCollectionAsync(string collectionId)
+    {
+        var paths = await _dialogs.PickAudioFilesAsync();
+        await ImportPathsIntoCollectionAsync(collectionId, paths);
     }
 
     private void OnEditCollection(CollectionItem item)

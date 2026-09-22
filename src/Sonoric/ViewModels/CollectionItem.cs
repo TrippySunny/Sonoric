@@ -49,6 +49,7 @@ public sealed partial class CollectionItem : ObservableObject
 
     public Action<CollectionItem>? OpenRequested { get; set; }
     public Action<CollectionItem>? PreviewCoverRequested { get; set; }
+    public Action<CollectionItem>? ImportRequested { get; set; }
     public Action<CollectionItem>? EditRequested { get; set; }
     public Action<CollectionItem>? DeleteRequested { get; set; }
 
@@ -65,6 +66,12 @@ public sealed partial class CollectionItem : ObservableObject
     }
 
     private bool CanPreviewCover() => HasCover;
+
+    [RelayCommand]
+    private void Import()
+    {
+        ImportRequested?.Invoke(this);
+    }
 
     [RelayCommand]
     private void Edit()

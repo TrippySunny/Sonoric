@@ -4,6 +4,7 @@
         x:Class="Sonoric.Views.CollectionEditorWindow"
         x:DataType="vm:CollectionEditorViewModel"
         Title="{Binding Header}"
+        Icon="/Assets/sonoric.png"
         Width="760"
         Height="720"
         MinWidth="640"
@@ -95,7 +96,15 @@
             </ScrollViewer>
 
             <DockPanel Margin="0,16,0,0">
-                <TextBlock DockPanel.Dock="Top" Text="Треки" Foreground="#8A8A8A"/>
+                <DockPanel DockPanel.Dock="Top">
+                    <Button DockPanel.Dock="Right"
+                            Classes="app-button"
+                            Content="Импортировать"
+                            Command="{Binding ImportFilesCommand}"/>
+                    <TextBlock Text="Треки"
+                               Foreground="#8A8A8A"
+                               VerticalAlignment="Center"/>
+                </DockPanel>
                 <TextBox DockPanel.Dock="Top"
                          Text="{Binding TrackSearchQuery}"
                          Watermark="Поиск песни"

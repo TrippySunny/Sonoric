@@ -4,6 +4,7 @@
         x:Class="Sonoric.Views.MainWindow"
         x:DataType="vm:MainViewModel"
         Title="Sonoric"
+        Icon="/Assets/sonoric.png"
         Width="1280"
         Height="800"
         MinWidth="960"
@@ -118,6 +119,8 @@
                     ToolTip.Placement="Pointer">
                 <Button.ContextFlyout>
                     <MenuFlyout>
+                        <MenuItem Header="Импортировать сюда"
+                                  Command="{Binding ImportCommand}"/>
                         <MenuItem Header="Посмотреть обложку"
                                   Command="{Binding PreviewCoverCommand}"
                                   IsEnabled="{Binding HasCover}"/>
@@ -548,7 +551,10 @@
                             </Border>
                         </StackPanel>
                     </StackPanel>
-                    <DockPanel Margin="28,20,28,16" IsVisible="{Binding IsCollectionOpen}">
+                    <DockPanel x:Name="CollectionPane"
+                               Margin="28,20,28,16"
+                               IsVisible="{Binding IsCollectionOpen}"
+                               DragDrop.AllowDrop="True">
                         <Grid DockPanel.Dock="Top"
                               ColumnDefinitions="Auto,*"
                               ColumnSpacing="24"
@@ -583,6 +589,9 @@
                                             Orientation="Horizontal"
                                             Spacing="8"
                                             HorizontalAlignment="Right">
+                                    <Button Classes="app-button"
+                                            Content="Импорт"
+                                            Command="{Binding ImportOpenedCollectionCommand}"/>
                                     <Button Classes="app-button"
                                             Content="Изменить"
                                             Command="{Binding EditOpenedCollectionCommand}"/>

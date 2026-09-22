@@ -16,6 +16,8 @@ public partial class MainWindow : Window
         InitializeComponent();
         AddHandler(DragDrop.DropEvent, OnDrop);
         AddHandler(DragDrop.DragOverEvent, OnDragOver);
+        CollectionPane.AddHandler(DragDrop.DropEvent, OnCollectionDrop);
+        CollectionPane.AddHandler(DragDrop.DragOverEvent, OnDragOver);
         KeyDown += OnWindowKeyDown;
     }
 
@@ -180,6 +182,23 @@ public partial class MainWindow : Window
             return;
         }
 
+        await ImportDroppedPathsAsync(viewModel.ImportPathsAsync, e);
+    }
+
+    private async void OnCollectionDrop(object? sender, DragEventArgs e)
+    {
+        if (DataContext is not MainViewModel viewModel || viewModel.OpenedCollection is null)
+        {
+            return;
+        }
+
+        e.Handled = true;
+        var collectionId = viewModel.OpenedCollection.Id;
+        await ImportDroppedPathsAsync(paths => viewModel.ImportPathsIntoCollectionAsync(collectionId, paths), e);
+    }
+
+    private static async Task ImportDroppedPathsAsync(Func<IReadOnlyList<string>, Task> import, DragEventArgs e)
+    {
         var items = e.DataTransfer.TryGetFiles();
         if (items is null || items.Length == 0)
         {
@@ -196,6 +215,9 @@ public partial class MainWindow : Window
             }
         }
 
-        await viewModel.ImportPathsAsync(paths);
+        if (paths.Count > 0)
+        {
+            await import(paths);
+        }
     }
 }

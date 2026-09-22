@@ -149,6 +149,133 @@ public sealed class LibraryService
         return imported;
     }
 
+    public (CollectionRecord? Collection, int Added) AddTracksToCollection(string collectionId, IEnumerable<string> paths)
+    {
+        var files = ExpandToAudioFiles(paths);
+        lock (_gate)
+        {
+            var collection = _index.Collections.FirstOrDefault(item => item.Id == collectionId);
+            if (collection is null)
+            {
+                return (null, 0);
+            }
+
+            var byHash = new Dictionary<string, TrackRecord>(StringComparer.OrdinalIgnoreCase);
+            foreach (var track in _index.Tracks)
+            {
+                byHash.TryAdd(track.Hash, track);
+            }
+            var knownIds = collection.TrackIds.ToHashSet(StringComparer.Ordinal);
+            var added = 0;
+            var importedNew = false;
+
+            foreach (var file in files)
+            {
+                string hash;
+                try
+                {
+                    hash = ComputeHash(file);
+                }
+                catch
+                {
+                    continue;
+                }
+
+                if (!byHash.TryGetValue(hash, out var record))
+                {
+                    try
+                    {
+                        record = ImportFileUnlocked(file, hash);
+                        byHash[hash] = record;
+                        importedNew = true;
+                    }
+                    catch
+                    {
+                        continue;
+                    }
+                }
+
+                if (!knownIds.Add(record.Id))
+                {
+                    continue;
+                }
+
+                collection.TrackIds.Add(record.Id);
+                added++;
+            }
+
+            if (importedNew)
+            {
+                _index.Tracks = _index.Tracks
+                    .OrderBy(track => track.Title, StringComparer.CurrentCultureIgnoreCase)
+                    .ThenBy(track => track.OriginalFileName, StringComparer.CurrentCultureIgnoreCase)
+                    .ToList();
+            }
+
+            if (added > 0 || importedNew)
+            {
+                PersistUnlocked();
+            }
+
+            return (CloneCollection(collection), added);
+        }
+    }
+
+    public IReadOnlyList<TrackRecord> ResolveAndImport(IEnumerable<string> paths)
+    {
+        var files = ExpandToAudioFiles(paths);
+        var resolved = new List<TrackRecord>();
+        lock (_gate)
+        {
+            var byHash = new Dictionary<string, TrackRecord>(StringComparer.OrdinalIgnoreCase);
+            foreach (var track in _index.Tracks)
+            {
+                byHash.TryAdd(track.Hash, track);
+            }
+            var importedNew = false;
+
+            foreach (var file in files)
+            {
+                string hash;
+                try
+                {
+                    hash = ComputeHash(file);
+                }
+                catch
+                {
+                    continue;
+                }
+
+                if (!byHash.TryGetValue(hash, out var record))
+                {
+                    try
+                    {
+                        record = ImportFileUnlocked(file, hash);
+                        byHash[hash] = record;
+                        importedNew = true;
+                    }
+                    catch
+                    {
+                        continue;
+                    }
+                }
+
+                resolved.Add(record);
+            }
+
+            if (importedNew)
+            {
+                _index.Tracks = _index.Tracks
+                    .OrderBy(track => track.Title, StringComparer.CurrentCultureIgnoreCase)
+                    .ThenBy(track => track.OriginalFileName, StringComparer.CurrentCultureIgnoreCase)
+                    .ToList();
+                PersistUnlocked();
+            }
+        }
+
+        return resolved;
+    }
+
     public string GetTrackPath(TrackRecord track)
     {
         return Path.Combine(AppPaths.LibraryDirectory, track.StoredFileName);
