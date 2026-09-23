@@ -19,6 +19,16 @@ public partial class MainWindow : Window
         CollectionPane.AddHandler(DragDrop.DropEvent, OnCollectionDrop);
         CollectionPane.AddHandler(DragDrop.DragOverEvent, OnDragOver);
         KeyDown += OnWindowKeyDown;
+        Opened += OnOpened;
+    }
+
+    private async void OnOpened(object? sender, EventArgs e)
+    {
+        Opened -= OnOpened;
+        if (DataContext is MainViewModel viewModel)
+        {
+            await viewModel.EnsureDisplayNameAsync();
+        }
     }
 
     private void OnWindowKeyDown(object? sender, KeyEventArgs e)

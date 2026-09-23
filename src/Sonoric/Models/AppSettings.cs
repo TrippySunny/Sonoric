@@ -9,4 +9,7 @@ public sealed class AppSettings
 
     [JsonPropertyName("lastTrackId")]
     public string? LastTrackId { get; set; }
+
+    [JsonPropertyName("displayName")]
+    public string DisplayName { get; set; } = string.Empty;
 }

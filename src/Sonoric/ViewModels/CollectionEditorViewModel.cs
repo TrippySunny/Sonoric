@@ -12,6 +12,7 @@ public partial class CollectionEditorViewModel : ObservableObject
     private readonly IFileDialogService _dialogs;
     private readonly LibraryService _library;
     private readonly List<TrackChoice> _libraryOrder = new();
+    private readonly string _playlistAuthor;
     private Bitmap? _preview;
     private bool _clearCover;
 
@@ -20,10 +21,12 @@ public partial class CollectionEditorViewModel : ObservableObject
         LibraryService library,
         IEnumerable<TrackItem> tracks,
         CollectionKind defaultKind,
-        CollectionRecord? existing)
+        CollectionRecord? existing,
+        string playlistAuthor)
     {
         _dialogs = dialogs;
         _library = library;
+        _playlistAuthor = playlistAuthor.Trim();
         ExistingId = existing?.Id ?? Guid.NewGuid().ToString("N");
         IsNew = existing is null;
         TitleText = existing?.Title ?? string.Empty;
@@ -372,7 +375,7 @@ public partial class CollectionEditorViewModel : ObservableObject
         {
             Id = ExistingId,
             Title = TitleText.Trim(),
-            Author = Kind == CollectionKind.Album ? Author.Trim() : string.Empty,
+            Author = Kind == CollectionKind.Album ? Author.Trim() : _playlistAuthor,
             Year = year,
             Description = Description.Trim(),
             Kind = Kind,

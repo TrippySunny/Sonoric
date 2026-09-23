@@ -28,4 +28,8 @@ dotnet publish "$ROOT/src/Sonoric/Sonoric.csproj" \
   -p:DebugSymbols=false \
   -o "$OUT"
 chmod +x "$OUT/Sonoric"
+TAR="$ROOT/dist/Sonoric-$RID.tar.gz"
+mkdir -p "$ROOT/dist"
+tar -czf "$TAR" -C "$OUT" .
 echo "$OUT"
+echo "$TAR"

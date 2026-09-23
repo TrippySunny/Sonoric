@@ -113,10 +113,34 @@
         </DataTemplate>
         <DataTemplate x:Key="CollectionTileTemplate" x:DataType="vm:CollectionItem">
             <Button Classes="album-tile"
-                    Command="{Binding OpenCommand}"
-                    ToolTip.Tip="{Binding TooltipText}"
-                    ToolTip.ShowDelay="2000"
-                    ToolTip.Placement="Pointer">
+                    Command="{Binding OpenCommand}">
+                <ToolTip.Tip>
+                    <StackPanel Spacing="4" MaxWidth="260">
+                        <TextBlock FontSize="14"
+                                   FontWeight="Medium"
+                                   TextWrapping="Wrap">
+                            <Run Text="{Binding Title}"/>
+                            <InlineUIContainer BaselineAlignment="Center">
+                                <Border Width="11"
+                                        Height="11"
+                                        CornerRadius="6"
+                                        Background="#FFFFFF"
+                                        Margin="6,0,0,0"
+                                        VerticalAlignment="Center"
+                                        IsVisible="{Binding IsAlbum}">
+                                    <Viewbox Width="6" Height="6">
+                                        <Path Fill="#000000"
+                                              Data="M 2,9 L 6.5,13.5 L 15,3.5 L 13.2,1.8 L 6.5,9.8 L 3.8,7.2 Z"/>
+                                    </Viewbox>
+                                </Border>
+                            </InlineUIContainer>
+                        </TextBlock>
+                        <TextBlock Text="{Binding Author}"
+                                   FontSize="12"
+                                   Foreground="#8A8A8A"
+                                   TextWrapping="Wrap"/>
+                    </StackPanel>
+                </ToolTip.Tip>
                 <Button.ContextFlyout>
                     <MenuFlyout>
                         <MenuItem Header="Импортировать сюда"
@@ -250,17 +274,31 @@
                 BorderThickness="0,0,0,1"
                 Padding="20,0">
             <Grid ColumnDefinitions="*,Auto">
-                <TextBlock Text="SONORIC"
-                           FontSize="18"
-                           FontWeight="SemiBold"
-                           LetterSpacing="4"
-                           VerticalAlignment="Center"
-                           Foreground="#FFFFFF"/>
-                <Button Grid.Column="1"
-                        Classes="app-button"
-                        Content="Импорт"
-                        Command="{Binding ImportFilesCommand}"
-                        VerticalAlignment="Center"/>
+                <Button Classes="brand-button"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Center">
+                    <Button.Flyout>
+                        <MenuFlyout Placement="BottomEdgeAlignedLeft">
+                            <MenuItem Header="Настройки"
+                                      Command="{Binding OpenSettingsCommand}"/>
+                            <MenuItem Header="Статистика"
+                                      Command="{Binding OpenStatisticsCommand}"/>
+                        </MenuFlyout>
+                    </Button.Flyout>
+                    <TextBlock Text="SONORIC"
+                               FontSize="18"
+                               FontWeight="SemiBold"
+                               LetterSpacing="4"
+                               Foreground="#FFFFFF"/>
+                </Button>
+                <StackPanel Grid.Column="1"
+                            Orientation="Horizontal"
+                            Spacing="8"
+                            VerticalAlignment="Center">
+                    <Button Classes="app-button"
+                            Content="Импорт"
+                            Command="{Binding ImportFilesCommand}"/>
+                </StackPanel>
             </Grid>
         </Border>
 
@@ -275,35 +313,21 @@
                             BorderBrush="#2A2A2A"
                             BorderThickness="0,0,0,1">
                         <StackPanel Spacing="10">
-                            <WrapPanel>
-                                <Button Classes="tab-chip"
-                                        Classes.selected="{Binding IsAllSection}"
-                                        Content="Все файлы"
-                                        Command="{Binding ShowAllCommand}"/>
-                                <Button Classes="tab-chip"
-                                        Classes.selected="{Binding IsFavoritesSection}"
-                                        Content="Избранные песни"
-                                        Command="{Binding ShowFavoritesCommand}"/>
-                                <Button Classes="tab-chip"
-                                        Classes.selected="{Binding IsAlbumsSection}"
-                                        Content="Альбомы"
-                                        Command="{Binding ShowAlbumsCommand}"/>
-                                <Button Classes="tab-chip"
-                                        Classes.selected="{Binding IsPlaylistsSection}"
-                                        Content="Плейлисты"
-                                        Command="{Binding ShowPlaylistsCommand}"/>
-                                <Button Classes="tab-chip"
-                                        Classes.selected="{Binding IsTagsSection}"
-                                        Content="Теги"
-                                        Command="{Binding ShowTagsCommand}"/>
-                            </WrapPanel>
+                            <ComboBox Classes="section-combo"
+                                      HorizontalAlignment="Stretch"
+                                      ItemsSource="{Binding SectionOptions}"
+                                      SelectedItem="{Binding SelectedSectionOption}">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:LibrarySectionOption">
+                                        <TextBlock Text="{Binding Label}"/>
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
                             <TextBox Text="{Binding SearchQuery, Mode=TwoWay}"
-                                     Watermark="Поиск файла или альбома"
-                                     IsVisible="{Binding IsFilterBarVisible}"/>
+                                     Watermark="Поиск файла или альбома"/>
                             <StackPanel Orientation="Horizontal"
                                         HorizontalAlignment="Left"
-                                        Spacing="6"
-                                        IsVisible="{Binding IsFilterBarVisible}">
+                                        Spacing="6">
                                 <ComboBox Classes="filter-combo"
                                           MinWidth="88"
                                           ItemsSource="{Binding TypeFilterOptions}"
@@ -324,7 +348,7 @@
                                     <Button.Flyout>
                                         <Flyout Placement="BottomEdgeAlignedLeft">
                                             <StackPanel Width="320" Margin="4">
-                                                <TextBlock Text="Нет тегов. Создайте их во вкладке «Теги»."
+                                                <TextBlock Text="Нет тегов. Создайте их в настройках."
                                                            Foreground="#8A8A8A"
                                                            TextWrapping="Wrap"
                                                            IsVisible="{Binding !HasCustomTags}"/>
@@ -394,94 +418,6 @@
                                     </ItemsPanelTemplate>
                                 </ItemsControl.ItemsPanel>
                             </ItemsControl>
-                        </ScrollViewer>
-                        <ScrollViewer IsVisible="{Binding IsTagListVisible}" Padding="16,12">
-                            <StackPanel Spacing="14">
-                                <TextBlock Text="{Binding TagSaveLabel}"
-                                           FontSize="16"
-                                           FontWeight="SemiBold"/>
-                                <TextBox Text="{Binding TagName}"
-                                         Watermark="Название тега"/>
-                                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="16">
-                                    <Border Width="72"
-                                            Height="72"
-                                            Background="{Binding TagPreview}"
-                                            BorderBrush="#2A2A2A"
-                                            BorderThickness="1"
-                                            CornerRadius="6"/>
-                                    <StackPanel Grid.Column="1" Spacing="8">
-                                        <Grid ColumnDefinitions="20,*" ColumnSpacing="8">
-                                            <TextBlock Text="R" VerticalAlignment="Center" Foreground="#8A8A8A"/>
-                                            <Slider Grid.Column="1"
-                                                    Minimum="0"
-                                                    Maximum="255"
-                                                    Value="{Binding TagRed}"/>
-                                        </Grid>
-                                        <Grid ColumnDefinitions="20,*" ColumnSpacing="8">
-                                            <TextBlock Text="G" VerticalAlignment="Center" Foreground="#8A8A8A"/>
-                                            <Slider Grid.Column="1"
-                                                    Minimum="0"
-                                                    Maximum="255"
-                                                    Value="{Binding TagGreen}"/>
-                                        </Grid>
-                                        <Grid ColumnDefinitions="20,*" ColumnSpacing="8">
-                                            <TextBlock Text="B" VerticalAlignment="Center" Foreground="#8A8A8A"/>
-                                            <Slider Grid.Column="1"
-                                                    Minimum="0"
-                                                    Maximum="255"
-                                                    Value="{Binding TagBlue}"/>
-                                        </Grid>
-                                        <TextBox Text="{Binding TagHex}"
-                                                 Watermark="#RRGGBB"/>
-                                    </StackPanel>
-                                </Grid>
-                                <StackPanel Orientation="Horizontal" Spacing="8">
-                                    <Button Classes="app-button"
-                                            Content="{Binding TagSaveLabel}"
-                                            Command="{Binding SaveTagCommand}"/>
-                                    <Button Classes="app-button"
-                                            Content="Отмена"
-                                            Command="{Binding CancelTagEditCommand}"
-                                            IsVisible="{Binding IsEditingTag}"/>
-                                </StackPanel>
-                                <TextBlock Text="{Binding TagValidationMessage}"
-                                           Foreground="#C8C8C8"/>
-                                <TextBlock Text="Мои теги"
-                                           FontSize="14"
-                                           FontWeight="SemiBold"
-                                           Margin="0,8,0,0"/>
-                                <ItemsControl ItemsSource="{Binding CustomTags}">
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate x:DataType="vm:TagListItem">
-                                            <Border Padding="0,8">
-                                                <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="8">
-                                                    <Ellipse Width="16"
-                                                             Height="16"
-                                                             Fill="{Binding Accent}"
-                                                             VerticalAlignment="Center"/>
-                                                    <TextBlock Grid.Column="1"
-                                                               Text="{Binding Name}"
-                                                               VerticalAlignment="Center"
-                                                               TextTrimming="CharacterEllipsis"/>
-                                                    <Button Grid.Column="2"
-                                                            Classes="app-button"
-                                                            Content="Изменить"
-                                                            Command="{Binding EditCommand}"
-                                                            Padding="10,6"/>
-                                                    <Button Grid.Column="3"
-                                                            Classes="app-button"
-                                                            Content="Удалить"
-                                                            Command="{Binding DeleteCommand}"
-                                                            Padding="10,6"/>
-                                                </Grid>
-                                            </Border>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                                <TextBlock Text="Пока нет своих тегов"
-                                           Foreground="#6A6A6A"
-                                           IsVisible="{Binding !HasCustomTags}"/>
-                            </StackPanel>
                         </ScrollViewer>
                         <TextBlock Text="{Binding EmptyListText}"
                                    IsVisible="{Binding IsTrackListEmpty}"
@@ -603,10 +539,26 @@
                                     <TextBlock Text="{Binding OpenedCollectionKindLabel}"
                                                FontSize="12"
                                                Foreground="#8A8A8A"/>
-                                    <TextBlock Text="{Binding OpenedCollectionTitle}"
-                                               FontSize="32"
+                                    <TextBlock FontSize="32"
                                                FontWeight="SemiBold"
-                                               TextWrapping="Wrap"/>
+                                               TextWrapping="Wrap">
+                                        <Run Text="{Binding OpenedCollectionTitle}"/>
+                                        <InlineUIContainer BaselineAlignment="Center">
+                                            <Border Width="14"
+                                                    Height="14"
+                                                    CornerRadius="7"
+                                                    Background="#FFFFFF"
+                                                    Margin="8,0,0,0"
+                                                    VerticalAlignment="Center"
+                                                    IsVisible="{Binding OpenedCollectionIsAlbum}"
+                                                    ToolTip.Tip="Альбом">
+                                                <Viewbox Width="8" Height="8">
+                                                    <Path Fill="#000000"
+                                                          Data="M 2,9 L 6.5,13.5 L 15,3.5 L 13.2,1.8 L 6.5,9.8 L 3.8,7.2 Z"/>
+                                                </Viewbox>
+                                            </Border>
+                                        </InlineUIContainer>
+                                    </TextBlock>
                                     <TextBlock Text="{Binding OpenedCollectionAuthor}"
                                                FontSize="16"
                                                Foreground="#C8C8C8"

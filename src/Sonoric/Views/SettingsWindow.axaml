@@ -1,0 +1,147 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:Sonoric.ViewModels"
+        x:Class="Sonoric.Views.SettingsWindow"
+        x:DataType="vm:SettingsViewModel"
+        Title="Настройки"
+        Icon="/Assets/sonoric.png"
+        Width="540"
+        Height="720"
+        MinWidth="460"
+        MinHeight="420"
+        Background="#000000"
+        WindowStartupLocation="CenterOwner"
+        CanResize="True">
+    <DockPanel Margin="20">
+        <Button DockPanel.Dock="Bottom"
+                Classes="app-button"
+                Content="Закрыть"
+                HorizontalAlignment="Right"
+                Click="OnClose"/>
+        <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+            <StackPanel Spacing="16" Margin="0,0,0,16">
+                <TextBlock Text="Настройки" FontSize="20" FontWeight="SemiBold"/>
+                <TextBlock Text="Имя" Foreground="#8A8A8A"/>
+                <TextBox Text="{Binding DisplayName}" Watermark="Ваше имя"/>
+                <TextBlock Text="Этим именем подписываются ваши плейлисты."
+                           Foreground="#6A6A6A"
+                           FontSize="12"
+                           TextWrapping="Wrap"/>
+                <Grid ColumnDefinitions="140,*" RowDefinitions="Auto,Auto" RowSpacing="8">
+                    <TextBlock Text="Версия" Foreground="#8A8A8A"/>
+                    <TextBlock Grid.Column="1" Text="{Binding VersionText}"/>
+                    <TextBlock Grid.Row="1" Text="Платформа" Foreground="#8A8A8A"/>
+                    <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding PlatformText}"/>
+                </Grid>
+                <TextBlock Text="Обновления берутся из GitHub Releases, только под текущую ОС."
+                           Foreground="#6A6A6A"
+                           FontSize="12"
+                           TextWrapping="Wrap"/>
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Button Classes="app-button"
+                            Content="Проверить обновления"
+                            Command="{Binding CheckCommand}"
+                            IsEnabled="{Binding !IsBusy}"/>
+                    <Button Classes="app-button"
+                            Content="{Binding InstallLabel}"
+                            Command="{Binding InstallCommand}"
+                            IsVisible="{Binding CanInstall}"
+                            IsEnabled="{Binding !IsBusy}"/>
+                </StackPanel>
+                <ProgressBar Minimum="0"
+                             Maximum="100"
+                             Height="8"
+                             Value="{Binding DownloadPercent}"
+                             IsVisible="{Binding IsDownloading}"/>
+                <TextBlock Text="{Binding StatusText}"
+                           Foreground="#C8C8C8"
+                           TextWrapping="Wrap"/>
+
+                <TextBlock Text="Теги"
+                           FontSize="16"
+                           FontWeight="SemiBold"
+                           Margin="0,8,0,0"/>
+                <TextBox Text="{Binding TagName}"
+                         Watermark="Название тега"/>
+                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="16">
+                    <Border Width="72"
+                            Height="72"
+                            Background="{Binding TagPreview}"
+                            BorderBrush="#2A2A2A"
+                            BorderThickness="1"
+                            CornerRadius="6"/>
+                    <StackPanel Grid.Column="1" Spacing="8">
+                        <Grid ColumnDefinitions="20,*" ColumnSpacing="8">
+                            <TextBlock Text="R" VerticalAlignment="Center" Foreground="#8A8A8A"/>
+                            <Slider Grid.Column="1"
+                                    Minimum="0"
+                                    Maximum="255"
+                                    Value="{Binding TagRed}"/>
+                        </Grid>
+                        <Grid ColumnDefinitions="20,*" ColumnSpacing="8">
+                            <TextBlock Text="G" VerticalAlignment="Center" Foreground="#8A8A8A"/>
+                            <Slider Grid.Column="1"
+                                    Minimum="0"
+                                    Maximum="255"
+                                    Value="{Binding TagGreen}"/>
+                        </Grid>
+                        <Grid ColumnDefinitions="20,*" ColumnSpacing="8">
+                            <TextBlock Text="B" VerticalAlignment="Center" Foreground="#8A8A8A"/>
+                            <Slider Grid.Column="1"
+                                    Minimum="0"
+                                    Maximum="255"
+                                    Value="{Binding TagBlue}"/>
+                        </Grid>
+                        <TextBox Text="{Binding TagHex}"
+                                 Watermark="#RRGGBB"/>
+                    </StackPanel>
+                </Grid>
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Button Classes="app-button"
+                            Content="{Binding TagSaveLabel}"
+                            Command="{Binding SaveTagCommand}"/>
+                    <Button Classes="app-button"
+                            Content="Отмена"
+                            Command="{Binding CancelTagEditCommand}"
+                            IsVisible="{Binding IsEditingTag}"/>
+                </StackPanel>
+                <TextBlock Text="{Binding TagValidationMessage}"
+                           Foreground="#C8C8C8"/>
+                <TextBlock Text="Мои теги"
+                           FontSize="14"
+                           FontWeight="SemiBold"/>
+                <ItemsControl ItemsSource="{Binding CustomTags}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:TagListItem">
+                            <Border Padding="0,8">
+                                <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="8">
+                                    <Ellipse Width="16"
+                                             Height="16"
+                                             Fill="{Binding Accent}"
+                                             VerticalAlignment="Center"/>
+                                    <TextBlock Grid.Column="1"
+                                               Text="{Binding Name}"
+                                               VerticalAlignment="Center"
+                                               TextTrimming="CharacterEllipsis"/>
+                                    <Button Grid.Column="2"
+                                            Classes="app-button"
+                                            Content="Изменить"
+                                            Command="{Binding EditCommand}"
+                                            Padding="10,6"/>
+                                    <Button Grid.Column="3"
+                                            Classes="app-button"
+                                            Content="Удалить"
+                                            Command="{Binding DeleteCommand}"
+                                            Padding="10,6"/>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <TextBlock Text="Пока нет своих тегов"
+                           Foreground="#6A6A6A"
+                           IsVisible="{Binding !HasCustomTags}"/>
+            </StackPanel>
+        </ScrollViewer>
+    </DockPanel>
+</Window>

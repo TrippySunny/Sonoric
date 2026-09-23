@@ -151,6 +151,8 @@
         <Setter Property="VerticalAlignment" Value="Top"/>
         <Setter Property="ClipToBounds" Value="True"/>
         <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="ToolTip.ShowDelay" Value="2000"/>
+        <Setter Property="ToolTip.Placement" Value="Pointer"/>
     </Style>
     <Style Selector="Button.album-tile:pointerover /template/ ContentPresenter">
         <Setter Property="Background" Value="#1A1A1A"/>
@@ -246,6 +248,34 @@
         <Setter Property="BorderBrush" Value="#2A2A2A"/>
         <Setter Property="MinHeight" Value="32"/>
     </Style>
+    <Style Selector="ComboBox.section-combo">
+        <Setter Property="MinHeight" Value="44"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="HorizontalAlignment" Value="Stretch"/>
+        <Setter Property="Padding" Value="12,8"/>
+    </Style>
+    <Style Selector="Button.brand-button">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Foreground" Value="#FFFFFF"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Padding" Value="0"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="HorizontalContentAlignment" Value="Left"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+    </Style>
+    <Style Selector="Button.brand-button /template/ ContentPresenter">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
+    </Style>
+    <Style Selector="Button.brand-button:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="Transparent"/>
+    </Style>
+    <Style Selector="Button.brand-button:pressed /template/ ContentPresenter">
+        <Setter Property="Background" Value="Transparent"/>
+    </Style>
+    <Style Selector="CheckBox">
+        <Setter Property="Foreground" Value="#F2F2F2"/>
+    </Style>
     <Style Selector="Button.play-button /template/ ContentPresenter">
         <Setter Property="Background" Value="#FFFFFF"/>
         <Setter Property="Foreground" Value="#000000"/>
@@ -323,6 +353,11 @@
         <Setter Property="Background" Value="{DynamicResource AppSelectedBrush}"/>
     </Style>
 
+    <Style Selector="ProgressBar">
+        <Setter Property="Foreground" Value="#FFFFFF"/>
+        <Setter Property="Background" Value="#2A2A2A"/>
+        <Setter Property="Height" Value="8"/>
+    </Style>
     <Style Selector="Slider">
         <Setter Property="Foreground" Value="#FFFFFF"/>
         <Setter Property="Background" Value="#2A2A2A"/>
@@ -363,6 +398,11 @@
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="Padding" Value="4"/>
         <Setter Property="CornerRadius" Value="4"/>
+    </Style>
+    <Style Selector="MenuFlyoutPresenter">
+        <Setter Property="Background" Value="#0A0A0A"/>
+        <Setter Property="BorderBrush" Value="#2A2A2A"/>
+        <Setter Property="Foreground" Value="#F2F2F2"/>
     </Style>
     <Style Selector="MenuItem">
         <Setter Property="Foreground" Value="#F2F2F2"/>

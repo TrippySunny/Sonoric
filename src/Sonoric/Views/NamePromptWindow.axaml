@@ -1,0 +1,34 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:Sonoric.ViewModels"
+        x:Class="Sonoric.Views.NamePromptWindow"
+        x:DataType="vm:NamePromptViewModel"
+        Title="Имя"
+        Icon="/Assets/sonoric.png"
+        Width="420"
+        Height="240"
+        MinWidth="360"
+        MinHeight="220"
+        Background="#000000"
+        WindowStartupLocation="CenterOwner"
+        CanResize="False">
+    <DockPanel Margin="20">
+        <Grid DockPanel.Dock="Bottom" ColumnDefinitions="*,Auto" Margin="0,16,0,0">
+            <TextBlock Text="{Binding ValidationMessage}"
+                       Foreground="#C8C8C8"
+                       VerticalAlignment="Center"/>
+            <Button Grid.Column="1"
+                    Classes="app-button"
+                    Content="Сохранить"
+                    Click="OnSave"/>
+        </Grid>
+        <StackPanel Spacing="12">
+            <TextBlock Text="Как вас зовут?" FontSize="20" FontWeight="SemiBold"/>
+            <TextBlock Text="Это имя будет автором ваших плейлистов."
+                       Foreground="#8A8A8A"
+                       TextWrapping="Wrap"/>
+            <TextBox Text="{Binding Name}"
+                     Watermark="Ваше имя"/>
+        </StackPanel>
+    </DockPanel>
+</Window>

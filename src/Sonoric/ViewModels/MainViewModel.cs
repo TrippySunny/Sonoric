@@ -1,5 +1,4 @@
 using System.Collections.ObjectModel;
-using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -15,6 +14,8 @@ public partial class MainViewModel : ObservableObject
     private readonly PlaybackService _playback;
     private readonly IFileDialogService _dialogs;
     private readonly ICollectionDialogService _collectionDialogs;
+    private readonly ISettingsDialogService _settingsDialogs;
+    private readonly UpdateService _updates = new();
     private readonly SettingsService _settingsService = new();
     private readonly AppSettings _settings;
     private readonly List<TrackItem> _playQueue = new();
@@ -25,27 +26,27 @@ public partial class MainViewModel : ObservableObject
     private Bitmap? _cover;
     private string? _activeTrackId;
     private bool _queueFromCollection;
-    private bool _updatingTagColor;
-    private string? _editingTagId;
 
     public MainViewModel(
         LibraryService library,
         PlaybackService playback,
         IFileDialogService dialogs,
-        ICollectionDialogService collectionDialogs)
+        ICollectionDialogService collectionDialogs,
+        ISettingsDialogService settingsDialogs)
     {
         _library = library;
         _playback = playback;
         _dialogs = dialogs;
         _collectionDialogs = collectionDialogs;
+        _settingsDialogs = settingsDialogs;
         _settings = _settingsService.Load();
         AllTracks = new ObservableCollection<TrackItem>();
         VisibleTracks = new ObservableCollection<TrackItem>();
         CollectionTracks = new ObservableCollection<TrackItem>();
         Albums = new ObservableCollection<CollectionItem>();
         Playlists = new ObservableCollection<CollectionItem>();
-        CustomTags = new ObservableCollection<TagListItem>();
         MoodFilters = new ObservableCollection<MoodFilterChip>();
+        SelectedSectionOption = SectionOptions[0];
         StatusText = playback.IsAvailable
             ? "Нет аудиофайлов. Нажмите «Импорт», чтобы добавить."
             : $"Плеер недоступен: {playback.InitError}";
@@ -62,8 +63,15 @@ public partial class MainViewModel : ObservableObject
     public ObservableCollection<TrackItem> CollectionTracks { get; }
     public ObservableCollection<CollectionItem> Albums { get; }
     public ObservableCollection<CollectionItem> Playlists { get; }
-    public ObservableCollection<TagListItem> CustomTags { get; }
     public ObservableCollection<MoodFilterChip> MoodFilters { get; }
+    public IReadOnlyList<LibrarySectionOption> SectionOptions { get; } =
+    [
+        new(LibrarySection.All, "Все файлы"),
+        new(LibrarySection.Favorites, "Избранные песни"),
+        new(LibrarySection.Albums, "Альбомы"),
+        new(LibrarySection.Playlists, "Плейлисты")
+    ];
+    public Action? RequestShutdown { get; set; }
 
     [ObservableProperty]
     private TrackItem? selectedTrack;
@@ -150,6 +158,9 @@ public partial class MainViewModel : ObservableObject
     private string openedCollectionKindLabel = string.Empty;
 
     [ObservableProperty]
+    private bool openedCollectionIsAlbum;
+
+    [ObservableProperty]
     private string openedCollectionCountText = string.Empty;
 
     [ObservableProperty]
@@ -216,40 +227,10 @@ public partial class MainViewModel : ObservableObject
     private string moodFilterLabel = "Настроение";
 
     [ObservableProperty]
-    private bool isTagListVisible;
-
-    [ObservableProperty]
-    private bool isFilterBarVisible = true;
-
-    [ObservableProperty]
     private bool hasCustomTags;
 
     [ObservableProperty]
-    private string tagName = string.Empty;
-
-    [ObservableProperty]
-    private double tagRed = 255;
-
-    [ObservableProperty]
-    private double tagGreen = 255;
-
-    [ObservableProperty]
-    private double tagBlue = 255;
-
-    [ObservableProperty]
-    private string tagHex = "#FFFFFF";
-
-    [ObservableProperty]
-    private IBrush tagPreview = new SolidColorBrush(Colors.White);
-
-    [ObservableProperty]
-    private string tagSaveLabel = "Создать тег";
-
-    [ObservableProperty]
-    private bool isEditingTag;
-
-    [ObservableProperty]
-    private string? tagValidationMessage;
+    private LibrarySectionOption selectedSectionOption = null!;
 
     public IReadOnlyList<string> TypeFilterOptions { get; } =
     [
@@ -265,12 +246,6 @@ public partial class MainViewModel : ObservableObject
         "По алфавиту",
         "По автору"
     ];
-
-    public bool IsAllSection => Section == LibrarySection.All;
-    public bool IsFavoritesSection => Section == LibrarySection.Favorites;
-    public bool IsAlbumsSection => Section == LibrarySection.Albums;
-    public bool IsPlaylistsSection => Section == LibrarySection.Playlists;
-    public bool IsTagsSection => Section == LibrarySection.Tags;
 
     partial void OnSelectedTrackChanged(TrackItem? value)
     {
@@ -338,81 +313,20 @@ public partial class MainViewModel : ObservableObject
         RefreshSection();
     }
 
-    partial void OnTagRedChanged(double value)
+    partial void OnSelectedSectionOptionChanged(LibrarySectionOption value)
     {
-        RefreshTagPreviewFromRgb();
-    }
-
-    partial void OnTagGreenChanged(double value)
-    {
-        RefreshTagPreviewFromRgb();
-    }
-
-    partial void OnTagBlueChanged(double value)
-    {
-        RefreshTagPreviewFromRgb();
-    }
-
-    partial void OnTagHexChanged(string value)
-    {
-        if (_updatingTagColor)
+        if (Section == value.Section)
         {
             return;
         }
 
-        var hex = value.Trim();
-        if (!hex.StartsWith('#'))
-        {
-            hex = "#" + hex;
-        }
-
-        if (!Color.TryParse(hex, out var color))
-        {
-            return;
-        }
-
-        _updatingTagColor = true;
-        TagRed = color.R;
-        TagGreen = color.G;
-        TagBlue = color.B;
-        TagPreview = new SolidColorBrush(color);
-        _updatingTagColor = false;
+        SetSection(value.Section);
     }
 
     [RelayCommand]
     private void ToggleSortDirection()
     {
         SortDescending = !SortDescending;
-    }
-
-    [RelayCommand]
-    private void ShowAll()
-    {
-        SetSection(LibrarySection.All);
-    }
-
-    [RelayCommand]
-    private void ShowFavorites()
-    {
-        SetSection(LibrarySection.Favorites);
-    }
-
-    [RelayCommand]
-    private void ShowAlbums()
-    {
-        SetSection(LibrarySection.Albums);
-    }
-
-    [RelayCommand]
-    private void ShowPlaylists()
-    {
-        SetSection(LibrarySection.Playlists);
-    }
-
-    [RelayCommand]
-    private void ShowTags()
-    {
-        SetSection(LibrarySection.Tags);
     }
 
     [RelayCommand]
@@ -495,6 +409,47 @@ public partial class MainViewModel : ObservableObject
         }
 
         await ImportIntoCollectionAsync(OpenedCollection.Id);
+    }
+
+    [RelayCommand]
+    private async Task OpenSettingsAsync()
+    {
+        var settings = new SettingsViewModel(_updates, _library, _settings.DisplayName, ApplyDisplayName, PersistState, () => RequestShutdown?.Invoke());
+        await _settingsDialogs.ShowAsync(settings);
+        settings.CommitProfile();
+        RebuildTagCatalog();
+        RefreshSection();
+    }
+
+    public async Task EnsureDisplayNameAsync()
+    {
+        if (!string.IsNullOrWhiteSpace(_settings.DisplayName))
+        {
+            return;
+        }
+
+        var prompt = new NamePromptViewModel();
+        if (!await _settingsDialogs.PromptDisplayNameAsync(prompt))
+        {
+            return;
+        }
+
+        ApplyDisplayName(prompt.Name);
+    }
+
+    private void ApplyDisplayName(string name)
+    {
+        _settings.DisplayName = name.Trim();
+        _settingsService.Save(_settings);
+        _library.SetPlaylistAuthors(_settings.DisplayName);
+        ReloadCollections();
+        RefreshSection();
+    }
+
+    [RelayCommand]
+    private async Task OpenStatisticsAsync()
+    {
+        await _settingsDialogs.ShowStatisticsAsync(new StatisticsViewModel(_library));
     }
 
     [RelayCommand]
@@ -682,7 +637,7 @@ public partial class MainViewModel : ObservableObject
 
     private async Task EditCollectionAsync(CollectionRecord? existing, CollectionKind defaultKind)
     {
-        var editor = new CollectionEditorViewModel(_dialogs, _library, AllTracks, defaultKind, existing);
+        var editor = new CollectionEditorViewModel(_dialogs, _library, AllTracks, defaultKind, existing, _settings.DisplayName);
         if (!await _collectionDialogs.EditAsync(editor))
         {
             return;
@@ -706,11 +661,12 @@ public partial class MainViewModel : ObservableObject
     private void SetSection(LibrarySection section)
     {
         Section = section;
-        OnPropertyChanged(nameof(IsAllSection));
-        OnPropertyChanged(nameof(IsFavoritesSection));
-        OnPropertyChanged(nameof(IsAlbumsSection));
-        OnPropertyChanged(nameof(IsPlaylistsSection));
-        OnPropertyChanged(nameof(IsTagsSection));
+        var option = SectionOptions.First(item => item.Section == section);
+        if (!ReferenceEquals(SelectedSectionOption, option))
+        {
+            SelectedSectionOption = option;
+        }
+
         RefreshSection();
     }
 
@@ -815,6 +771,7 @@ public partial class MainViewModel : ObservableObject
         OpenedCollectionDescription = item.Description;
         HasOpenedDescription = !string.IsNullOrWhiteSpace(item.Description);
         OpenedCollectionKindLabel = item.KindLabel;
+        OpenedCollectionIsAlbum = item.IsAlbum;
         OpenedCollectionCountText = item.CountText;
         OpenedCollectionCover = item.Cover;
         OpenedCollectionHasCover = item.HasCover;
@@ -934,68 +891,6 @@ public partial class MainViewModel : ObservableObject
         RefreshSection();
     }
 
-    [RelayCommand]
-    private void SaveTag()
-    {
-        var name = TagName.Trim();
-        if (string.IsNullOrWhiteSpace(name))
-        {
-            TagValidationMessage = "Укажите название тега";
-            return;
-        }
-
-        if (_library.TagNameTaken(name, _editingTagId))
-        {
-            TagValidationMessage = "Такой тег уже есть";
-            return;
-        }
-
-        RefreshTagPreviewFromRgb();
-        _library.UpsertTag(new TagRecord
-        {
-            Id = _editingTagId ?? Guid.NewGuid().ToString("N"),
-            Name = name,
-            Hex = TagHex
-        });
-        ResetTagEditor();
-        RebuildTagCatalog();
-        RefreshSection();
-    }
-
-    [RelayCommand]
-    private void CancelTagEdit()
-    {
-        ResetTagEditor();
-    }
-
-    private void BeginEditTag(TagListItem item)
-    {
-        _editingTagId = item.Record.Id;
-        IsEditingTag = true;
-        TagSaveLabel = "Сохранить";
-        TagValidationMessage = null;
-        _updatingTagColor = true;
-        TagName = item.Name;
-        TagRed = item.Visual.Color.R;
-        TagGreen = item.Visual.Color.G;
-        TagBlue = item.Visual.Color.B;
-        TagHex = item.Visual.Hex;
-        TagPreview = item.Visual.Accent;
-        _updatingTagColor = false;
-    }
-
-    private void DeleteCustomTag(TagListItem item)
-    {
-        if (_editingTagId == item.Record.Id)
-        {
-            ResetTagEditor();
-        }
-
-        _library.DeleteTag(item.Record.Id);
-        RebuildTagCatalog();
-        RefreshSection();
-    }
-
     private void RebuildTagCatalog()
     {
         var visuals = _library.Tags.Select(record => new MoodVisual(record)).ToList();
@@ -1008,18 +903,7 @@ public partial class MainViewModel : ObservableObject
             MoodFilters.Add(chip);
         }
 
-        CustomTags.Clear();
-        foreach (var record in _library.Tags)
-        {
-            var item = new TagListItem(record, new MoodVisual(record))
-            {
-                EditRequested = BeginEditTag,
-                DeleteRequested = DeleteCustomTag
-            };
-            CustomTags.Add(item);
-        }
-
-        HasCustomTags = CustomTags.Count > 0;
+        HasCustomTags = MoodFilters.Count > 0;
         foreach (var track in AllTracks)
         {
             track.SyncCatalog(visuals);
@@ -1027,39 +911,6 @@ public partial class MainViewModel : ObservableObject
 
         var count = MoodFilters.Count(filter => filter.IsSelected);
         MoodFilterLabel = count == 0 ? "Настроение" : $"Настроение · {count}";
-    }
-
-    private void ResetTagEditor()
-    {
-        _editingTagId = null;
-        IsEditingTag = false;
-        TagSaveLabel = "Создать тег";
-        TagName = string.Empty;
-        TagValidationMessage = null;
-        _updatingTagColor = true;
-        TagRed = 255;
-        TagGreen = 255;
-        TagBlue = 255;
-        TagHex = "#FFFFFF";
-        TagPreview = new SolidColorBrush(Colors.White);
-        _updatingTagColor = false;
-    }
-
-    private void RefreshTagPreviewFromRgb()
-    {
-        if (_updatingTagColor)
-        {
-            return;
-        }
-
-        _updatingTagColor = true;
-        var color = Color.FromRgb(
-            (byte)Math.Clamp(Math.Round(TagRed), 0, 255),
-            (byte)Math.Clamp(Math.Round(TagGreen), 0, 255),
-            (byte)Math.Clamp(Math.Round(TagBlue), 0, 255));
-        TagPreview = new SolidColorBrush(color);
-        TagHex = $"#{color.R:X2}{color.G:X2}{color.B:X2}";
-        _updatingTagColor = false;
     }
 
     private SearchKind CurrentSearchKind()
@@ -1105,18 +956,9 @@ public partial class MainViewModel : ObservableObject
             showPlaylists = true;
         }
 
-        if (Section == LibrarySection.Tags)
-        {
-            showAlbums = false;
-            showPlaylists = false;
-            showTracks = false;
-        }
-
         IsAlbumGridVisible = showAlbums;
         IsPlaylistListVisible = showPlaylists;
         IsTrackListVisible = showTracks && !showAlbums && !showPlaylists;
-        IsTagListVisible = Section == LibrarySection.Tags;
-        IsFilterBarVisible = Section != LibrarySection.Tags;
         IsCreateVisible = (Section == LibrarySection.Albums || Section == LibrarySection.Playlists) &&
                           kind == SearchKind.All &&
                           string.IsNullOrWhiteSpace(SearchQuery);
@@ -1170,10 +1012,6 @@ public partial class MainViewModel : ObservableObject
         {
             IsTrackListEmpty = Playlists.Count == 0;
         }
-        else if (IsTagListVisible)
-        {
-            IsTrackListEmpty = false;
-        }
 
         RefreshStatus();
     }
@@ -1189,7 +1027,7 @@ public partial class MainViewModel : ObservableObject
         {
             source = AllTracks.Where(track => track.IsFavorite);
         }
-        else if (Section is LibrarySection.Albums or LibrarySection.Playlists or LibrarySection.Tags)
+        else if (Section is LibrarySection.Albums or LibrarySection.Playlists)
         {
             source = Array.Empty<TrackItem>();
         }
@@ -1305,10 +1143,6 @@ public partial class MainViewModel : ObservableObject
                     ? (moodActive ? "Нет плейлистов с выбранным настроением" : "Нет плейлистов")
                     : $"{Playlists.Count} плейлистов";
                 EmptyListText = moodActive ? "Нет плейлистов с выбранным настроением" : "Нет плейлистов";
-                break;
-            case LibrarySection.Tags:
-                StatusText = CustomTags.Count == 0 ? "Нет своих тегов" : $"{CustomTags.Count} тегов";
-                EmptyListText = "Нет своих тегов";
                 break;
             default:
                 if (AllTracks.Count == 0)

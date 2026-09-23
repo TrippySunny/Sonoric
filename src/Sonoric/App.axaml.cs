@@ -24,7 +24,11 @@ public partial class App : Application
             var window = new MainWindow();
             var dialogs = new FileDialogService(window);
             var collections = new CollectionDialogService(window);
-            var viewModel = new MainViewModel(library, playback, dialogs, collections);
+            var settings = new SettingsDialogService(window);
+            var viewModel = new MainViewModel(library, playback, dialogs, collections, settings)
+            {
+                RequestShutdown = () => desktop.Shutdown()
+            };
             window.DataContext = viewModel;
             desktop.MainWindow = window;
             desktop.ShutdownRequested += (_, _) =>

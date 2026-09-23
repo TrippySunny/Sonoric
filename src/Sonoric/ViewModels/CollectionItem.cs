@@ -18,10 +18,10 @@ public sealed partial class CollectionItem : ObservableObject
         TrackCount = trackCount;
         CountText = trackCount == 1 ? "1 трек" : $"{trackCount} треков";
         KindLabel = record.Kind == CollectionKind.Album ? "Альбом" : "Плейлист";
-        HasAuthor = record.Kind == CollectionKind.Album && !string.IsNullOrWhiteSpace(record.Author);
+        IsAlbum = record.Kind == CollectionKind.Album;
+        HasAuthor = !string.IsNullOrWhiteSpace(record.Author);
         HasYear = Year.HasValue;
         YearText = Year?.ToString() ?? string.Empty;
-        TooltipText = BuildTooltip();
         HasCover = !string.IsNullOrWhiteSpace(coverPath) && File.Exists(coverPath);
         if (HasCover)
         {
@@ -39,11 +39,11 @@ public sealed partial class CollectionItem : ObservableObject
     public int TrackCount { get; }
     public string CountText { get; }
     public string KindLabel { get; }
+    public bool IsAlbum { get; }
     public bool HasAuthor { get; }
     public bool HasYear { get; }
     public bool HasCover { get; }
     public Bitmap? Cover { get; }
-    public string TooltipText { get; }
     public string Id => Record.Id;
     public CollectionKind Kind => Record.Kind;
 
@@ -88,26 +88,5 @@ public sealed partial class CollectionItem : ObservableObject
     public void DisposeCover()
     {
         Cover?.Dispose();
-    }
-
-    private string BuildTooltip()
-    {
-        if (Kind == CollectionKind.Playlist)
-        {
-            return Title;
-        }
-
-        var parts = new List<string> { Title };
-        if (HasAuthor)
-        {
-            parts.Add(Author);
-        }
-
-        if (HasYear)
-        {
-            parts.Add(YearText);
-        }
-
-        return string.Join(" — ", parts);
     }
 }

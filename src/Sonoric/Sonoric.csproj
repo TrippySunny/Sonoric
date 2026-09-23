@@ -11,6 +11,8 @@
     <RootNamespace>Sonoric</RootNamespace>
     <AssemblyName>Sonoric</AssemblyName>
     <ApplicationTitle>Sonoric</ApplicationTitle>
+    <Version>1.0.0</Version>
+    <InformationalVersion>1.0.0</InformationalVersion>
   </PropertyGroup>
 
   <ItemGroup>

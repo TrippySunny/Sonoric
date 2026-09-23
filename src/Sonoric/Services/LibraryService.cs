@@ -396,7 +396,7 @@ public sealed class LibraryService
             }
 
             existing.Title = collection.Title.Trim();
-            existing.Author = collection.Kind == CollectionKind.Album ? collection.Author.Trim() : string.Empty;
+            existing.Author = collection.Author.Trim();
             existing.Year = collection.Kind == CollectionKind.Album ? collection.Year : null;
             existing.Description = collection.Description.Trim();
             existing.Kind = collection.Kind;
@@ -421,6 +421,20 @@ public sealed class LibraryService
         lock (_gate)
         {
             _index.Collections.RemoveAll(item => item.Id == collectionId);
+            PersistUnlocked();
+        }
+    }
+
+    public void SetPlaylistAuthors(string name)
+    {
+        lock (_gate)
+        {
+            var author = name.Trim();
+            foreach (var collection in _index.Collections.Where(item => item.Kind == CollectionKind.Playlist))
+            {
+                collection.Author = author;
+            }
+
             PersistUnlocked();
         }
     }
