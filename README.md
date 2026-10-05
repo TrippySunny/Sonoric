@@ -1,81 +1,63 @@
-<div align="center">
+<p align="center">
+  <img src="assets/logo_256.png" width="96" alt="Sonoric">
+</p>
 
-# 🎵 Sonoric
-
-**Standalone and multifunctional music player**
-
-[![License: MIT](https://shields.io)](https://opensource.org)
-[![Platform: Windows & Linux](https://shields.io)]()
-[![Open Source](https://shields.io)]()
+<h1 align="center">Sonoric</h1>
 
 <p align="center">
-  <a href="#🎨-features">Features</a> •
-  <a href="#🚀-installation">Installation</a> •
-  <a href="#📱-roadmap">Roadmap</a> •
-  <a href="#🤝-contributing">Contributing</a>
+  <strong>Standalone and multifunctional music player.</strong><br>
+  Cross-platform audio player with dynamic audio-reactive shaders, offline library sync, and custom mood tagging.
+</p>
+
+<p align="center">
+  <img src="https://shields.io" alt="Platform">
+  <img src="https://shields.io" alt="Environment">
+  <img src="https://shields.io" alt="License">
 </p>
 
 ---
 
-**Sonoric** — это бесплатный музыкальный плеер с открытым исходным кодом, созданный для тех, кто ценит полную независимость от стриминговых сервисов, кастомизацию и мощные визуальные эффекты.
+Sonoric is a free, open-source music player built for complete independence from streaming services. It processes your local audio files, visualizes them in real time using GPU shaders, and keeps your library synchronized across all your devices.
 
-[🌐 Посетить сайт проекта](https://github.io)
+It is designed for audiophiles, offline music collectors, and anyone who wants a gorgeous, highly customizable media player.
 
-</div>
+## Core Features
 
-## 🎨 Особенности (Features)
+| Feature | What it does |
+| --- | --- |
+| **Complete Offline Mode** | Operates entirely without an internet connection, keeping your data private and available anywhere. |
+| **True Cross-Platform** | Seamless native support across Windows, Linux, and mobile operating systems. |
+| **Format Omnivore** | Accepts and smoothly plays almost any standard audio file format without extra codecs. |
+| **Audio-Reactive Shaders** | Generates stunning, real-time visual effects that physically react to the rhythm, bass, and frequencies of your music. |
+| **Custom Mood Tagging** | Allows you to classify and filter your library using your own personalized mood categories rather than generic genres. |
+| **Library Synchronization** | Synchronizes music collections, custom tags, and configuration data between multiple desktop and mobile devices. |
+| **Custom Playlist Exchange** | Features a dedicated, lightweight playlist file format optimized for instant importing and exporting. |
 
-*   **🌐 Полный оффлайн:** Работает без интернета. Ваша музыка всегда с вами.
-*   **💻 Мультиплатформенность:** Полноценная поддержка Windows и Linux прямо сейчас.
-*   **🎼 Всеядность:** Поддерживает большинство популярных форматов аудиофайлов.
-*   **🔮 Музыкальные шейдеры:** Генерирует красивую визуализацию, которая динамически реагирует на ритм и частоты трека.
-*   **🏷️ Кастомные теги настроения:** Классифицируйте медиатеку так, как удобно вам, добавляя трекам уникальные теги настроения.
-*   **🔄 Синхронизация библиотек:** Возможность синхронизировать вашу музыку и настройки между различными устройствами.
-*   **📂 Уникальный формат плейлистов:** Экспорт и импорт плейлистов в собственном оптимизированном формате файла для быстрого обмена.
+## Viewer & Customization
 
-## 🚀 Установка и запуск (Installation)
+The audio visualizer is powered by customizable shader effects that adapt immediately to the ongoing audio track.
+
+- **Dynamic Feedback:** Shader algorithms analyze frequency spectra and waveform spikes to alter colors, scale shapes, and move visual layouts.
+- **Playlist Architecture:** Export whole collections in a single clicks using the fast, lightweight `.sonoric` native file container.
+- **Mood System:** Filter your entire music archive with precise multi-tag combinations based on how you feel.
+
+## Supported Formats
+
+`MP3` · `FLAC` · `WAV` · `OGG` · `M4A` · `AAC` · `OPUS`
+
+## Run it
 
 ### Linux
-Вы можете быстро установить и запустить плеер с помощью готовых скриптов автоматизации:
+Automated scripts are included to handle dependencies and system building:
 ```bash
-# Клонируйте репозиторий
-git clone https://github.com
-cd Sonoric
-
-# Сделайте скрипт исполняемым и запустите установку
 chmod +x install-linux.sh
 ./install-linux.sh
-
-# Для запуска используйте
 ./run.sh
 ```
 
 ### Windows
-1. Клонируйте репозиторий.
-2. Откройте решение `Sonoric.sln` в Visual Studio или вашей любимой IDE с поддержкой .NET.
-3. Соберите и запустите проект.
+Launch the main solution file `Sonoric.sln` inside Visual Studio or any compatible .NET IDE, then build and run the executable.
 
-## 📱 План развития (Roadmap)
+## License
 
-- [x] Поддержка Windows и Linux
-- [x] Динамические аудио-шейдеры
-- [x] Система импорта/экспорта плейлистов
-- [ ] 🔄 Мобильные версии (Android & iOS) — плеер будет доступен практически на любой ОС
-- [ ] Оптимизация потребления ресурсов при работе с тяжелыми шейдерами
-
-## 🤝 Участие в разработке (Contributing)
-
-Проект имеет открытый исходный код, и любые улучшения приветствуются! 
-
-1. Сделайте Fork репозитория.
-2. Создайте свою ветку фичи (`git checkout -b feature/AmazingFeature`).
-3. Закоммитьте изменения (`git commit -m 'Add some AmazingFeature'`).
-4. Пушните в ветку (`git push origin feature/AmazingFeature`).
-5. Откройте Pull Request.
-
-## 📄 Лицензия (License)
-
-Распространяется под лицензией MIT. Подробности смотрите в файле `LICENSE`.
-
----
-<p align="center">Разработано с ❤️ от <a href="https://github.com/TrippySunny">TrippySunny</a></p>
+[MIT](LICENSE)
