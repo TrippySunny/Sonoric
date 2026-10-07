@@ -45,19 +45,6 @@ The audio visualizer is powered by customizable shader effects that adapt immedi
 
 `MP3` · `FLAC` · `WAV` · `OGG` · `M4A` · `AAC` · `OPUS`
 
-## Run it
-
-### Linux
-Automated scripts are included to handle dependencies and system building:
-```bash
-chmod +x install-linux.sh
-./install-linux.sh
-./run.sh
-```
-
-### Windows
-Launch the main solution file `Sonoric.sln` inside Visual Studio or any compatible .NET IDE, then build and run the executable.
-
 ## License
 
 [MIT](LICENSE)
