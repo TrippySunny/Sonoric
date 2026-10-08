@@ -12,4 +12,10 @@ public sealed class AppSettings
 
     [JsonPropertyName("displayName")]
     public string DisplayName { get; set; } = string.Empty;
+
+    [JsonPropertyName("deviceId")]
+    public string DeviceId { get; set; } = string.Empty;
+
+    [JsonPropertyName("trustedDevices")]
+    public List<TrustedDevice> TrustedDevices { get; set; } = new();
 }

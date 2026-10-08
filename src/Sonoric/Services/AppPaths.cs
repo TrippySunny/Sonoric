@@ -16,6 +16,8 @@ public static class AppPaths
         LibraryDirectory = Path.Combine(Root, "library");
         CoversDirectory = Path.Combine(Root, "covers");
         CollectionCoversDirectory = Path.Combine(Root, "collection-covers");
+        ArtistPhotosDirectory = Path.Combine(Root, "artist-photos");
+        FolderCoversDirectory = Path.Combine(Root, "folder-covers");
         LibraryIndexPath = Path.Combine(Root, "library.json");
         SettingsPath = Path.Combine(Root, "settings.json");
     }
@@ -24,6 +26,8 @@ public static class AppPaths
     public static string LibraryDirectory { get; }
     public static string CoversDirectory { get; }
     public static string CollectionCoversDirectory { get; }
+    public static string ArtistPhotosDirectory { get; }
+    public static string FolderCoversDirectory { get; }
     public static string LibraryIndexPath { get; }
     public static string SettingsPath { get; }
 
@@ -33,5 +37,7 @@ public static class AppPaths
         Directory.CreateDirectory(LibraryDirectory);
         Directory.CreateDirectory(CoversDirectory);
         Directory.CreateDirectory(CollectionCoversDirectory);
+        Directory.CreateDirectory(ArtistPhotosDirectory);
+        Directory.CreateDirectory(FolderCoversDirectory);
     }
 }

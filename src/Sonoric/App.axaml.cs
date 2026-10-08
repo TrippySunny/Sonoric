@@ -33,6 +33,7 @@ public partial class App : Application
             desktop.MainWindow = window;
             desktop.ShutdownRequested += (_, _) =>
             {
+                viewModel.StopSync();
                 viewModel.PersistState();
                 playback.Dispose();
             };

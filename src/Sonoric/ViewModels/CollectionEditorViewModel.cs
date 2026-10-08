@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -34,6 +35,8 @@ public partial class CollectionEditorViewModel : ObservableObject
         YearText = existing?.Year?.ToString() ?? string.Empty;
         Description = existing?.Description ?? string.Empty;
         Kind = existing?.Kind ?? defaultKind;
+        AccentMode = existing?.AccentMode ?? AlbumAccentMode.Dominant;
+        CustomAccentHex = string.IsNullOrWhiteSpace(existing?.CustomAccentHex) ? "#5A5A5A" : existing.CustomAccentHex;
         CoverSourcePath = null;
         Header = IsNew ? "Новый набор" : "Изменить набор";
         var selectedIds = existing?.TrackIds ?? new List<string>();
@@ -92,6 +95,15 @@ public partial class CollectionEditorViewModel : ObservableObject
     private CollectionKind kind;
 
     [ObservableProperty]
+    private AlbumAccentMode accentMode = AlbumAccentMode.Dominant;
+
+    [ObservableProperty]
+    private string customAccentHex = "#5A5A5A";
+
+    [ObservableProperty]
+    private IBrush customAccentPreview = new SolidColorBrush(Color.Parse("#5A5A5A"));
+
+    [ObservableProperty]
     private Bitmap? coverPreview;
 
     [ObservableProperty]
@@ -132,6 +144,56 @@ public partial class CollectionEditorViewModel : ObservableObject
 
     public bool ShowAlbumFields => Kind == CollectionKind.Album;
 
+    public bool ShowCustomAccent => Kind == CollectionKind.Album && AccentMode == AlbumAccentMode.Custom;
+
+    public bool AccentIsAverage
+    {
+        get => AccentMode == AlbumAccentMode.Average;
+        set
+        {
+            if (value)
+            {
+                AccentMode = AlbumAccentMode.Average;
+            }
+        }
+    }
+
+    public bool AccentIsDominant
+    {
+        get => AccentMode == AlbumAccentMode.Dominant;
+        set
+        {
+            if (value)
+            {
+                AccentMode = AlbumAccentMode.Dominant;
+            }
+        }
+    }
+
+    public bool AccentIsContrast
+    {
+        get => AccentMode == AlbumAccentMode.Contrast;
+        set
+        {
+            if (value)
+            {
+                AccentMode = AlbumAccentMode.Contrast;
+            }
+        }
+    }
+
+    public bool AccentIsCustom
+    {
+        get => AccentMode == AlbumAccentMode.Custom;
+        set
+        {
+            if (value)
+            {
+                AccentMode = AlbumAccentMode.Custom;
+            }
+        }
+    }
+
     public bool IsSelectedTab => !IsLibraryTab;
 
     public string SelectedTabLabel => $"Выбранные ({Choices.Count(choice => choice.IsSelected)})";
@@ -156,6 +218,30 @@ public partial class CollectionEditorViewModel : ObservableObject
         OnPropertyChanged(nameof(IsAlbum));
         OnPropertyChanged(nameof(IsPlaylist));
         OnPropertyChanged(nameof(ShowAlbumFields));
+        OnPropertyChanged(nameof(ShowCustomAccent));
+    }
+
+    partial void OnAccentModeChanged(AlbumAccentMode value)
+    {
+        OnPropertyChanged(nameof(AccentIsAverage));
+        OnPropertyChanged(nameof(AccentIsDominant));
+        OnPropertyChanged(nameof(AccentIsContrast));
+        OnPropertyChanged(nameof(AccentIsCustom));
+        OnPropertyChanged(nameof(ShowCustomAccent));
+    }
+
+    partial void OnCustomAccentHexChanged(string value)
+    {
+        var hex = value.Trim();
+        if (!hex.StartsWith('#'))
+        {
+            hex = "#" + hex;
+        }
+
+        if (Color.TryParse(hex, out var color))
+        {
+            CustomAccentPreview = new SolidColorBrush(color);
+        }
     }
 
     partial void OnTrackSearchQueryChanged(string value)
@@ -370,6 +456,19 @@ public partial class CollectionEditorViewModel : ObservableObject
             year = parsed;
         }
 
+        var customHex = CustomAccentHex.Trim();
+        if (!customHex.StartsWith('#'))
+        {
+            customHex = "#" + customHex;
+        }
+
+        if (Kind == CollectionKind.Album && AccentMode == AlbumAccentMode.Custom && !Color.TryParse(customHex, out _))
+        {
+            ValidationMessage = "Укажите цвет в формате #RRGGBB";
+            record = new CollectionRecord();
+            return false;
+        }
+
         ValidationMessage = null;
         record = new CollectionRecord
         {
@@ -379,6 +478,10 @@ public partial class CollectionEditorViewModel : ObservableObject
             Year = year,
             Description = Description.Trim(),
             Kind = Kind,
+            AccentMode = AccentMode,
+            CustomAccentHex = Color.TryParse(customHex, out var parsedColor)
+                ? $"#{parsedColor.R:X2}{parsedColor.G:X2}{parsedColor.B:X2}"
+                : "#5A5A5A",
             TrackIds = Choices.Where(choice => choice.IsSelected).Select(choice => choice.Track.Id).ToList()
         };
         return true;

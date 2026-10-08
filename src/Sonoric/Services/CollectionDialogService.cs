@@ -7,6 +7,8 @@ namespace Sonoric.Services;
 public interface ICollectionDialogService
 {
     Task<bool> EditAsync(CollectionEditorViewModel editor);
+    Task<bool> EditArtistAsync(ArtistEditorViewModel editor);
+    Task<bool> EditFolderAsync(FolderEditorViewModel editor);
 }
 
 public sealed class CollectionDialogService : ICollectionDialogService
@@ -25,7 +27,26 @@ public sealed class CollectionDialogService : ICollectionDialogService
             DataContext = editor
         };
 
-        var result = await window.ShowDialog<bool>(_owner);
-        return result;
+        return await window.ShowDialog<bool>(_owner);
+    }
+
+    public async Task<bool> EditArtistAsync(ArtistEditorViewModel editor)
+    {
+        var window = new ArtistEditorWindow
+        {
+            DataContext = editor
+        };
+
+        return await window.ShowDialog<bool>(_owner);
+    }
+
+    public async Task<bool> EditFolderAsync(FolderEditorViewModel editor)
+    {
+        var window = new FolderEditorWindow
+        {
+            DataContext = editor
+        };
+
+        return await window.ShowDialog<bool>(_owner);
     }
 }

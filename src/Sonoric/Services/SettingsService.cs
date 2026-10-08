@@ -15,20 +15,37 @@ public sealed class SettingsService
         AppPaths.EnsureCreated();
         if (!File.Exists(AppPaths.SettingsPath))
         {
-            var created = new AppSettings();
-            Save(created);
-            return created;
+            return EnsureIdentity(new AppSettings());
         }
 
         try
         {
             var json = File.ReadAllText(AppPaths.SettingsPath);
-            return JsonSerializer.Deserialize<AppSettings>(json, JsonOptions) ?? new AppSettings();
+            var loaded = JsonSerializer.Deserialize<AppSettings>(json, JsonOptions) ?? new AppSettings();
+            return EnsureIdentity(loaded);
         }
         catch
         {
-            return new AppSettings();
+            return EnsureIdentity(new AppSettings());
         }
+    }
+
+    private AppSettings EnsureIdentity(AppSettings settings)
+    {
+        settings.TrustedDevices ??= new List<TrustedDevice>();
+        var created = false;
+        if (!Guid.TryParse(settings.DeviceId, out var id) || id == Guid.Empty)
+        {
+            settings.DeviceId = Guid.NewGuid().ToString("N");
+            created = true;
+        }
+
+        if (created || !File.Exists(AppPaths.SettingsPath))
+        {
+            Save(settings);
+        }
+
+        return settings;
     }
 
     public void Save(AppSettings settings)

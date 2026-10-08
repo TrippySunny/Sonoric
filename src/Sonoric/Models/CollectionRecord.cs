@@ -25,6 +25,12 @@ public sealed class CollectionRecord
     [JsonPropertyName("coverFileName")]
     public string? CoverFileName { get; set; }
 
+    [JsonPropertyName("accentMode")]
+    public AlbumAccentMode AccentMode { get; set; } = AlbumAccentMode.Dominant;
+
+    [JsonPropertyName("customAccentHex")]
+    public string CustomAccentHex { get; set; } = "#5A5A5A";
+
     [JsonPropertyName("trackIds")]
     public List<string> TrackIds { get; set; } = new();
 

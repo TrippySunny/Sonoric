@@ -1,0 +1,100 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:Sonoric.ViewModels"
+        x:Class="Sonoric.Views.FolderEditorWindow"
+        x:DataType="vm:FolderEditorViewModel"
+        Title="{Binding Header}"
+        Icon="/Assets/sonoric.png"
+        Width="720"
+        Height="680"
+        MinWidth="560"
+        MinHeight="520"
+        Background="#000000"
+        WindowStartupLocation="CenterOwner"
+        CanResize="True">
+    <DockPanel Margin="20">
+        <Grid DockPanel.Dock="Bottom" ColumnDefinitions="*,Auto,Auto" Margin="0,16,0,0">
+            <TextBlock Text="{Binding ValidationMessage}"
+                       Foreground="#C8C8C8"
+                       VerticalAlignment="Center"/>
+            <Button Grid.Column="1"
+                    Classes="app-button"
+                    Content="Отмена"
+                    Click="OnCancel"
+                    Margin="0,0,10,0"/>
+            <Button Grid.Column="2"
+                    Classes="app-button"
+                    Content="Сохранить"
+                    Click="OnSave"/>
+        </Grid>
+
+        <DockPanel>
+            <ScrollViewer DockPanel.Dock="Top"
+                          MaxHeight="280"
+                          HorizontalScrollBarVisibility="Disabled">
+                <StackPanel Spacing="14">
+                    <TextBlock Text="{Binding Header}" FontSize="20" FontWeight="SemiBold"/>
+
+                    <TextBlock Text="Название" Foreground="#8A8A8A"/>
+                    <TextBox Text="{Binding TitleText}" Watermark="Название папки"/>
+
+                    <TextBlock Text="Описание" Foreground="#8A8A8A"/>
+                    <TextBox Text="{Binding Description}"
+                             Watermark="Описание"
+                             AcceptsReturn="True"
+                             Height="80"
+                             TextWrapping="Wrap"/>
+
+                    <TextBlock Text="Обложка" Foreground="#8A8A8A"/>
+                    <StackPanel Orientation="Horizontal" Spacing="14">
+                        <Border Width="96"
+                                Height="96"
+                                Background="#111111"
+                                BorderBrush="#2A2A2A"
+                                BorderThickness="1"
+                                ClipToBounds="True">
+                            <Panel>
+                                <TextBlock Text="♪"
+                                           FontSize="28"
+                                           Foreground="#3A3A3A"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           IsVisible="{Binding !HasCoverPreview}"/>
+                                <Image Source="{Binding CoverPreview}"
+                                       Stretch="UniformToFill"
+                                       IsVisible="{Binding HasCoverPreview}"/>
+                            </Panel>
+                        </Border>
+                        <StackPanel Spacing="8" VerticalAlignment="Center">
+                            <Button Classes="app-button" Content="Выбрать фото" Command="{Binding PickCoverCommand}"/>
+                            <Button Classes="app-button" Content="Убрать фото" Command="{Binding RemoveCoverCommand}"/>
+                        </StackPanel>
+                    </StackPanel>
+                </StackPanel>
+            </ScrollViewer>
+
+            <DockPanel Margin="0,16,0,0">
+                <TextBlock DockPanel.Dock="Top"
+                           Text="Альбомы и плейлисты"
+                           Foreground="#8A8A8A"
+                           Margin="0,0,0,8"/>
+                <ListBox ItemsSource="{Binding Items}"
+                         Classes="compact"
+                         ScrollViewer.AllowAutoHide="False"
+                         ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate x:DataType="vm:CollectionPickItem">
+                            <CheckBox IsChecked="{Binding IsSelected}"
+                                      Margin="8,6,20,6">
+                                <StackPanel>
+                                    <TextBlock Text="{Binding Title}"/>
+                                    <TextBlock Text="{Binding KindLabel}" FontSize="12" Foreground="#8A8A8A"/>
+                                </StackPanel>
+                            </CheckBox>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </DockPanel>
+        </DockPanel>
+    </DockPanel>
+</Window>

@@ -12,4 +12,10 @@ public sealed class LibraryIndex
 
     [JsonPropertyName("tags")]
     public List<TagRecord> Tags { get; set; } = new();
+
+    [JsonPropertyName("artists")]
+    public List<ArtistRecord> Artists { get; set; } = new();
+
+    [JsonPropertyName("folders")]
+    public List<FolderRecord> Folders { get; set; } = new();
 }

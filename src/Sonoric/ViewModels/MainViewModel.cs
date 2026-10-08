@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -18,8 +19,12 @@ public partial class MainViewModel : ObservableObject
     private readonly UpdateService _updates = new();
     private readonly SettingsService _settingsService = new();
     private readonly AppSettings _settings;
+    private readonly LocalSyncHost _syncHost;
+    private readonly LocalSyncClient _syncClient;
     private readonly List<TrackItem> _playQueue = new();
     private readonly List<CollectionItem> _collectionCache = new();
+    private readonly List<ArtistItem> _artistCache = new();
+    private readonly List<FolderItem> _folderCache = new();
     private bool _suppressSelectionPlay;
     private bool _isSeeking;
     private bool _updatingPosition;
@@ -40,13 +45,17 @@ public partial class MainViewModel : ObservableObject
         _collectionDialogs = collectionDialogs;
         _settingsDialogs = settingsDialogs;
         _settings = _settingsService.Load();
+        _syncHost = new LocalSyncHost(_settings, _settingsService, library);
+        _syncClient = new LocalSyncClient(_settings, _settingsService);
         AllTracks = new ObservableCollection<TrackItem>();
         VisibleTracks = new ObservableCollection<TrackItem>();
         CollectionTracks = new ObservableCollection<TrackItem>();
-        Albums = new ObservableCollection<CollectionItem>();
-        Playlists = new ObservableCollection<CollectionItem>();
+        VisibleCollections = new ObservableCollection<CollectionItem>();
+        VisibleArtists = new ObservableCollection<ArtistItem>();
+        VisibleFolders = new ObservableCollection<FolderItem>();
+        ArtistAlbums = new ObservableCollection<CollectionItem>();
+        FolderCollections = new ObservableCollection<CollectionItem>();
         MoodFilters = new ObservableCollection<MoodFilterChip>();
-        SelectedSectionOption = SectionOptions[0];
         StatusText = playback.IsAvailable
             ? "Нет аудиофайлов. Нажмите «Импорт», чтобы добавить."
             : $"Плеер недоступен: {playback.InitError}";
@@ -61,16 +70,12 @@ public partial class MainViewModel : ObservableObject
     public ObservableCollection<TrackItem> AllTracks { get; }
     public ObservableCollection<TrackItem> VisibleTracks { get; }
     public ObservableCollection<TrackItem> CollectionTracks { get; }
-    public ObservableCollection<CollectionItem> Albums { get; }
-    public ObservableCollection<CollectionItem> Playlists { get; }
+    public ObservableCollection<CollectionItem> VisibleCollections { get; }
+    public ObservableCollection<ArtistItem> VisibleArtists { get; }
+    public ObservableCollection<FolderItem> VisibleFolders { get; }
+    public ObservableCollection<CollectionItem> ArtistAlbums { get; }
+    public ObservableCollection<CollectionItem> FolderCollections { get; }
     public ObservableCollection<MoodFilterChip> MoodFilters { get; }
-    public IReadOnlyList<LibrarySectionOption> SectionOptions { get; } =
-    [
-        new(LibrarySection.All, "Все файлы"),
-        new(LibrarySection.Favorites, "Избранные песни"),
-        new(LibrarySection.Albums, "Альбомы"),
-        new(LibrarySection.Playlists, "Плейлисты")
-    ];
     public Action? RequestShutdown { get; set; }
 
     [ObservableProperty]
@@ -81,6 +86,12 @@ public partial class MainViewModel : ObservableObject
 
     [ObservableProperty]
     private bool isCollectionTracksEmpty;
+
+    [ObservableProperty]
+    private bool isArtistAlbumsEmpty;
+
+    [ObservableProperty]
+    private bool isFolderCollectionsEmpty;
 
     [ObservableProperty]
     private string nowPlayingTitle = "Ничего не играет";
@@ -131,7 +142,7 @@ public partial class MainViewModel : ObservableObject
     private bool isTrackListEmpty = true;
 
     [ObservableProperty]
-    private LibrarySection section = LibrarySection.All;
+    private LibraryPage page = LibraryPage.Home;
 
     [ObservableProperty]
     private CollectionRecord? openedCollection;
@@ -170,6 +181,9 @@ public partial class MainViewModel : ObservableObject
     private bool openedCollectionHasCover;
 
     [ObservableProperty]
+    private IBrush collectionPaneBackground = CoverAccentService.DefaultBackdrop;
+
+    [ObservableProperty]
     private bool hasOpenedDescription;
 
     [ObservableProperty]
@@ -191,19 +205,115 @@ public partial class MainViewModel : ObservableObject
     private double coverViewerOffsetY;
 
     [ObservableProperty]
-    private bool isTrackListVisible = true;
+    private bool isTrackListVisible;
 
     [ObservableProperty]
-    private bool isAlbumGridVisible;
+    private bool isHomeVisible = true;
 
     [ObservableProperty]
-    private bool isPlaylistListVisible;
+    private bool isCollectionGridVisible;
 
     [ObservableProperty]
-    private bool isCreateVisible;
+    private bool isArtistGridVisible;
 
     [ObservableProperty]
-    private string createLabel = "Создать набор";
+    private bool isFolderGridVisible;
+
+    [ObservableProperty]
+    private bool isArtistPageVisible;
+
+    [ObservableProperty]
+    private bool isFolderPageVisible;
+
+    [ObservableProperty]
+    private bool isBackVisible;
+
+    [ObservableProperty]
+    private bool isFilterBarVisible;
+
+    [ObservableProperty]
+    private bool isFavoritesFilterVisible;
+
+    [ObservableProperty]
+    private bool isTypeFilterVisible;
+
+    [ObservableProperty]
+    private bool isCreateAlbumVisible;
+
+    [ObservableProperty]
+    private bool isCreatePlaylistVisible;
+
+    [ObservableProperty]
+    private bool isCreateArtistVisible;
+
+    [ObservableProperty]
+    private bool isCreateFolderVisible;
+
+    [ObservableProperty]
+    private bool isEditOpenedArtistVisible;
+
+    [ObservableProperty]
+    private bool isEditOpenedFolderVisible;
+
+    [ObservableProperty]
+    private bool favoritesOnly;
+
+    [ObservableProperty]
+    private string pageTitle = "Библиотека";
+
+    [ObservableProperty]
+    private string songsHubCount = "0 песен";
+
+    [ObservableProperty]
+    private string collectionsHubCount = "0 наборов";
+
+    [ObservableProperty]
+    private string artistsHubCount = "0 артистов";
+
+    [ObservableProperty]
+    private string foldersHubCount = "0 папок";
+
+    [ObservableProperty]
+    private ArtistRecord? openedArtist;
+
+    [ObservableProperty]
+    private string openedArtistName = string.Empty;
+
+    [ObservableProperty]
+    private string openedArtistDescription = string.Empty;
+
+    [ObservableProperty]
+    private bool hasOpenedArtistDescription;
+
+    [ObservableProperty]
+    private Bitmap? openedArtistPhoto;
+
+    [ObservableProperty]
+    private bool openedArtistHasPhoto;
+
+    [ObservableProperty]
+    private string openedArtistCountText = string.Empty;
+
+    [ObservableProperty]
+    private FolderRecord? openedFolder;
+
+    [ObservableProperty]
+    private string openedFolderTitle = string.Empty;
+
+    [ObservableProperty]
+    private string openedFolderDescription = string.Empty;
+
+    [ObservableProperty]
+    private bool hasOpenedFolderDescription;
+
+    [ObservableProperty]
+    private Bitmap? openedFolderCover;
+
+    [ObservableProperty]
+    private bool openedFolderHasCover;
+
+    [ObservableProperty]
+    private string openedFolderCountText = string.Empty;
 
     [ObservableProperty]
     private string emptyListText = "Нет аудиофайлов";
@@ -229,15 +339,11 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private bool hasCustomTags;
 
-    [ObservableProperty]
-    private LibrarySectionOption selectedSectionOption = null!;
-
     public IReadOnlyList<string> TypeFilterOptions { get; } =
     [
         "Все",
-        "Песня",
-        "Альбом",
-        "Плейлист"
+        "Альбомы",
+        "Плейлисты"
     ];
 
     public IReadOnlyList<string> SortOptions { get; } =
@@ -313,20 +419,91 @@ public partial class MainViewModel : ObservableObject
         RefreshSection();
     }
 
-    partial void OnSelectedSectionOptionChanged(LibrarySectionOption value)
+    partial void OnFavoritesOnlyChanged(bool value)
     {
-        if (Section == value.Section)
-        {
-            return;
-        }
-
-        SetSection(value.Section);
+        RefreshSection();
     }
 
     [RelayCommand]
     private void ToggleSortDirection()
     {
         SortDescending = !SortDescending;
+    }
+
+    [RelayCommand]
+    private void ToggleFavoritesFilter()
+    {
+        FavoritesOnly = !FavoritesOnly;
+    }
+
+    [RelayCommand]
+    private void GoBack()
+    {
+        if (IsCollectionOpen && Page is LibraryPage.Artist or LibraryPage.Folder)
+        {
+            CloseCollection();
+            return;
+        }
+
+        switch (Page)
+        {
+            case LibraryPage.Artist:
+                OpenArtists();
+                break;
+            case LibraryPage.Folder:
+                OpenFolders();
+                break;
+            default:
+                OpenHome();
+                break;
+        }
+    }
+
+    [RelayCommand]
+    private void OpenHome()
+    {
+        OpenedArtist = null;
+        OpenedArtistPhoto = null;
+        OpenedArtistHasPhoto = false;
+        OpenedFolder = null;
+        OpenedFolderCover = null;
+        OpenedFolderHasCover = false;
+        Page = LibraryPage.Home;
+        RefreshSection();
+    }
+
+    [RelayCommand]
+    private void OpenSongs()
+    {
+        Page = LibraryPage.Songs;
+        RefreshSection();
+    }
+
+    [RelayCommand]
+    private void OpenCollections()
+    {
+        Page = LibraryPage.Collections;
+        RefreshSection();
+    }
+
+    [RelayCommand]
+    private void OpenArtists()
+    {
+        OpenedArtist = null;
+        OpenedArtistPhoto = null;
+        OpenedArtistHasPhoto = false;
+        Page = LibraryPage.Artists;
+        RefreshSection();
+    }
+
+    [RelayCommand]
+    private void OpenFolders()
+    {
+        OpenedFolder = null;
+        OpenedFolderCover = null;
+        OpenedFolderHasCover = false;
+        Page = LibraryPage.Folders;
+        RefreshSection();
     }
 
     [RelayCommand]
@@ -338,6 +515,7 @@ public partial class MainViewModel : ObservableObject
         OpenedCollectionHasCover = false;
         SelectedCollectionTrack = null;
         CollectionTracks.Clear();
+        CollectionPaneBackground = CoverAccentService.DefaultBackdrop;
         RefreshSection();
     }
 
@@ -414,10 +592,21 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand]
     private async Task OpenSettingsAsync()
     {
-        var settings = new SettingsViewModel(_updates, _library, _settings.DisplayName, ApplyDisplayName, PersistState, () => RequestShutdown?.Invoke());
+        var settings = new SettingsViewModel(
+            _updates,
+            _library,
+            _syncHost,
+            _syncClient,
+            _settings.DisplayName,
+            ApplyDisplayName,
+            OnLibrarySynced,
+            PersistState,
+            () => RequestShutdown?.Invoke());
         await _settingsDialogs.ShowAsync(settings);
         settings.CommitProfile();
         RebuildTagCatalog();
+        ReloadArtists();
+        ReloadFolders();
         RefreshSection();
     }
 
@@ -443,6 +632,8 @@ public partial class MainViewModel : ObservableObject
         _settingsService.Save(_settings);
         _library.SetPlaylistAuthors(_settings.DisplayName);
         ReloadCollections();
+        ReloadArtists();
+        ReloadFolders();
         RefreshSection();
     }
 
@@ -453,10 +644,71 @@ public partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private async Task CreateCollectionAsync()
+    private async Task CreateAlbumAsync()
     {
-        var kind = Section == LibrarySection.Albums ? CollectionKind.Album : CollectionKind.Playlist;
-        await EditCollectionAsync(null, kind);
+        await EditCollectionAsync(null, CollectionKind.Album);
+    }
+
+    [RelayCommand]
+    private async Task CreatePlaylistAsync()
+    {
+        await EditCollectionAsync(null, CollectionKind.Playlist);
+    }
+
+    [RelayCommand]
+    private async Task CreateArtistAsync()
+    {
+        await EditArtistAsync(null);
+    }
+
+    [RelayCommand]
+    private async Task CreateFolderAsync()
+    {
+        await EditFolderAsync(null);
+    }
+
+    [RelayCommand]
+    private async Task EditOpenedArtistAsync()
+    {
+        if (OpenedArtist is null)
+        {
+            return;
+        }
+
+        await EditArtistAsync(OpenedArtist);
+    }
+
+    [RelayCommand]
+    private async Task EditOpenedFolderAsync()
+    {
+        if (OpenedFolder is null)
+        {
+            return;
+        }
+
+        await EditFolderAsync(OpenedFolder);
+    }
+
+    [RelayCommand]
+    private void OpenOpenedArtistPhoto()
+    {
+        if (OpenedArtistPhoto is null || !OpenedArtistHasPhoto)
+        {
+            return;
+        }
+
+        ShowCoverViewer(OpenedArtistPhoto);
+    }
+
+    [RelayCommand]
+    private void OpenOpenedFolderCover()
+    {
+        if (OpenedFolderCover is null || !OpenedFolderHasCover)
+        {
+            return;
+        }
+
+        ShowCoverViewer(OpenedFolderCover);
     }
 
     [RelayCommand]
@@ -635,6 +887,16 @@ public partial class MainViewModel : ObservableObject
         _library.Save();
     }
 
+    public void StopSync()
+    {
+        _ = _syncHost.StopAsync();
+    }
+
+    private void OnLibrarySynced()
+    {
+        ReloadLibrary(SelectedTrack?.Id ?? _settings.LastTrackId);
+    }
+
     private async Task EditCollectionAsync(CollectionRecord? existing, CollectionKind defaultKind)
     {
         var editor = new CollectionEditorViewModel(_dialogs, _library, AllTracks, defaultKind, existing, _settings.DisplayName);
@@ -655,16 +917,56 @@ public partial class MainViewModel : ObservableObject
         }
 
         ReloadCollections();
+        ReloadArtists();
+        ReloadFolders();
         RefreshSection();
     }
 
-    private void SetSection(LibrarySection section)
+    private async Task EditArtistAsync(ArtistRecord? existing)
     {
-        Section = section;
-        var option = SectionOptions.First(item => item.Section == section);
-        if (!ReferenceEquals(SelectedSectionOption, option))
+        var editor = new ArtistEditorViewModel(_dialogs, _library.Collections, existing);
+        if (!await _collectionDialogs.EditArtistAsync(editor))
         {
-            SelectedSectionOption = option;
+            return;
+        }
+
+        if (!editor.TryCommit(out var record))
+        {
+            return;
+        }
+
+        var saved = _library.UpsertArtist(record, editor.PhotoSourcePath, editor.ClearPhoto);
+        ReloadArtists();
+        var opened = _artistCache.FirstOrDefault(item => item.Id == saved.Id);
+        if (opened is not null && (Page == LibraryPage.Artist || existing is null))
+        {
+            OpenArtist(opened);
+            return;
+        }
+
+        RefreshSection();
+    }
+
+    private async Task EditFolderAsync(FolderRecord? existing)
+    {
+        var editor = new FolderEditorViewModel(_dialogs, _library.Collections, existing);
+        if (!await _collectionDialogs.EditFolderAsync(editor))
+        {
+            return;
+        }
+
+        if (!editor.TryCommit(out var record))
+        {
+            return;
+        }
+
+        var saved = _library.UpsertFolder(record, editor.CoverSourcePath, editor.ClearCover);
+        ReloadFolders();
+        var opened = _folderCache.FirstOrDefault(item => item.Id == saved.Id);
+        if (opened is not null && (Page == LibraryPage.Folder || existing is null))
+        {
+            OpenFolder(opened);
+            return;
         }
 
         RefreshSection();
@@ -693,6 +995,8 @@ public partial class MainViewModel : ObservableObject
 
         RebuildTagCatalog();
         ReloadCollections();
+        ReloadArtists();
+        ReloadFolders();
         _suppressSelectionPlay = true;
         SelectedTrack = AllTracks.FirstOrDefault(track => track.Id == selectedId) ?? AllTracks.FirstOrDefault();
         _suppressSelectionPlay = false;
@@ -740,6 +1044,7 @@ public partial class MainViewModel : ObservableObject
             OpenedCollectionCover = null;
             OpenedCollectionHasCover = false;
             CollectionTracks.Clear();
+            CollectionPaneBackground = CoverAccentService.DefaultBackdrop;
             return;
         }
 
@@ -775,6 +1080,207 @@ public partial class MainViewModel : ObservableObject
         OpenedCollectionCountText = item.CountText;
         OpenedCollectionCover = item.Cover;
         OpenedCollectionHasCover = item.HasCover;
+        if (item.IsAlbum)
+        {
+            var accent = CoverAccentService.Resolve(item.CoverPath, item.Record.AccentMode, item.Record.CustomAccentHex);
+            CollectionPaneBackground = CoverAccentService.CreateBackdrop(accent);
+        }
+        else
+        {
+            CollectionPaneBackground = CoverAccentService.DefaultBackdrop;
+        }
+    }
+
+    private void ReloadArtists()
+    {
+        var openedId = OpenedArtist?.Id;
+        foreach (var item in _artistCache)
+        {
+            item.DisposePhoto();
+        }
+
+        _artistCache.Clear();
+        var visuals = _library.Tags.Select(record => new MoodVisual(record)).ToList();
+        foreach (var record in _library.Artists)
+        {
+            var item = new ArtistItem(record, _library.GetArtistPhotoPath(record))
+            {
+                OpenRequested = OpenArtist,
+                EditRequested = OnEditArtist,
+                DeleteRequested = OnDeleteArtist,
+                TagsChanged = OnArtistTagsChanged
+            };
+            item.SyncCatalog(visuals);
+            _artistCache.Add(item);
+        }
+
+        if (openedId is null)
+        {
+            return;
+        }
+
+        var opened = _artistCache.FirstOrDefault(item => item.Id == openedId);
+        if (opened is null)
+        {
+            OpenedArtist = null;
+            OpenedArtistPhoto = null;
+            OpenedArtistHasPhoto = false;
+            if (Page == LibraryPage.Artist)
+            {
+                Page = LibraryPage.Artists;
+            }
+
+            return;
+        }
+
+        BindOpenedArtist(opened);
+    }
+
+    private void ReloadFolders()
+    {
+        var openedId = OpenedFolder?.Id;
+        foreach (var item in _folderCache)
+        {
+            item.DisposeCover();
+        }
+
+        _folderCache.Clear();
+        var visuals = _library.Tags.Select(record => new MoodVisual(record)).ToList();
+        foreach (var record in _library.Folders)
+        {
+            var item = new FolderItem(record, _library.GetFolderCoverPath(record))
+            {
+                OpenRequested = OpenFolder,
+                EditRequested = OnEditFolder,
+                DeleteRequested = OnDeleteFolder,
+                TagsChanged = OnFolderTagsChanged
+            };
+            item.SyncCatalog(visuals);
+            _folderCache.Add(item);
+        }
+
+        if (openedId is null)
+        {
+            return;
+        }
+
+        var opened = _folderCache.FirstOrDefault(item => item.Id == openedId);
+        if (opened is null)
+        {
+            OpenedFolder = null;
+            OpenedFolderCover = null;
+            OpenedFolderHasCover = false;
+            if (Page == LibraryPage.Folder)
+            {
+                Page = LibraryPage.Folders;
+            }
+
+            return;
+        }
+
+        BindOpenedFolder(opened);
+    }
+
+    private void OpenArtist(ArtistItem item)
+    {
+        OpenedArtist = item.Record;
+        BindOpenedArtist(item);
+        Page = LibraryPage.Artist;
+        RefreshSection();
+    }
+
+    private void BindOpenedArtist(ArtistItem item)
+    {
+        OpenedArtist = item.Record;
+        OpenedArtistName = item.Name;
+        OpenedArtistDescription = item.Description;
+        HasOpenedArtistDescription = item.HasDescription;
+        OpenedArtistPhoto = item.Photo;
+        OpenedArtistHasPhoto = item.HasPhoto;
+        OpenedArtistCountText = item.CountText;
+    }
+
+    private void OpenFolder(FolderItem item)
+    {
+        OpenedFolder = item.Record;
+        BindOpenedFolder(item);
+        Page = LibraryPage.Folder;
+        RefreshSection();
+    }
+
+    private void BindOpenedFolder(FolderItem item)
+    {
+        OpenedFolder = item.Record;
+        OpenedFolderTitle = item.Title;
+        OpenedFolderDescription = item.Description;
+        HasOpenedFolderDescription = item.HasDescription;
+        OpenedFolderCover = item.Cover;
+        OpenedFolderHasCover = item.HasCover;
+        OpenedFolderCountText = item.CountText;
+    }
+
+    private void OnEditArtist(ArtistItem item)
+    {
+        _ = EditArtistAsync(item.Record);
+    }
+
+    private void OnDeleteArtist(ArtistItem item)
+    {
+        if (OpenedArtist?.Id == item.Id)
+        {
+            OpenedArtist = null;
+            OpenedArtistPhoto = null;
+            OpenedArtistHasPhoto = false;
+            if (Page == LibraryPage.Artist)
+            {
+                Page = LibraryPage.Artists;
+            }
+        }
+
+        _library.DeleteArtist(item.Id);
+        ReloadArtists();
+        RefreshSection();
+    }
+
+    private void OnArtistTagsChanged(ArtistItem item)
+    {
+        _library.SetArtistTags(item.Id, item.Record.Tags);
+        if (MoodFilters.Any(filter => filter.IsSelected))
+        {
+            RefreshSection();
+        }
+    }
+
+    private void OnEditFolder(FolderItem item)
+    {
+        _ = EditFolderAsync(item.Record);
+    }
+
+    private void OnDeleteFolder(FolderItem item)
+    {
+        if (OpenedFolder?.Id == item.Id)
+        {
+            OpenedFolder = null;
+            OpenedFolderCover = null;
+            OpenedFolderHasCover = false;
+            if (Page == LibraryPage.Folder)
+            {
+                Page = LibraryPage.Folders;
+            }
+        }
+
+        _library.DeleteFolder(item.Id);
+        ReloadFolders();
+        RefreshSection();
+    }
+
+    private void OnFolderTagsChanged(FolderItem item)
+    {
+        _library.SetFolderTags(item.Id, item.Record.Tags);
+        if (MoodFilters.Any(filter => filter.IsSelected))
+        {
+            RefreshSection();
+        }
     }
 
     private void OnImportCollection(CollectionItem item)
@@ -801,10 +1307,13 @@ public partial class MainViewModel : ObservableObject
             OpenedCollection = null;
             OpenedCollectionCover = null;
             OpenedCollectionHasCover = false;
+            CollectionPaneBackground = CoverAccentService.DefaultBackdrop;
         }
 
         _library.DeleteCollection(item.Id);
         ReloadCollections();
+        ReloadArtists();
+        ReloadFolders();
         RefreshSection();
     }
 
@@ -865,7 +1374,7 @@ public partial class MainViewModel : ObservableObject
         item.IsFavorite = !item.IsFavorite;
         item.Record.IsFavorite = item.IsFavorite;
         _library.SetFavorite(item.Id, item.IsFavorite);
-        if (Section == LibrarySection.Favorites && !IsCollectionOpen)
+        if (FavoritesOnly)
         {
             RefreshSection();
         }
@@ -909,60 +1418,55 @@ public partial class MainViewModel : ObservableObject
             track.SyncCatalog(visuals);
         }
 
+        foreach (var artist in _artistCache)
+        {
+            artist.SyncCatalog(visuals);
+        }
+
+        foreach (var folder in _folderCache)
+        {
+            folder.SyncCatalog(visuals);
+        }
+
         var count = MoodFilters.Count(filter => filter.IsSelected);
         MoodFilterLabel = count == 0 ? "Настроение" : $"Настроение · {count}";
-    }
-
-    private SearchKind CurrentSearchKind()
-    {
-        return TypeFilterIndex switch
-        {
-            1 => SearchKind.Song,
-            2 => SearchKind.Album,
-            3 => SearchKind.Playlist,
-            _ => SearchKind.All
-        };
     }
 
     private void RefreshSection()
     {
         IsCollectionOpen = OpenedCollection is not null;
-        var kind = CurrentSearchKind();
-        var showAlbums = kind is SearchKind.All or SearchKind.Album &&
-                         (kind == SearchKind.Album || Section == LibrarySection.Albums);
-        var showPlaylists = kind is SearchKind.All or SearchKind.Playlist &&
-                            (kind == SearchKind.Playlist || Section == LibrarySection.Playlists);
-        var showTracks = kind is SearchKind.All or SearchKind.Song &&
-                         Section is LibrarySection.All or LibrarySection.Favorites;
-
-        if (kind == SearchKind.Song)
+        IsHomeVisible = Page == LibraryPage.Home;
+        IsTrackListVisible = Page == LibraryPage.Songs;
+        IsCollectionGridVisible = Page == LibraryPage.Collections;
+        IsArtistGridVisible = Page == LibraryPage.Artists;
+        IsFolderGridVisible = Page == LibraryPage.Folders;
+        IsArtistPageVisible = Page == LibraryPage.Artist;
+        IsFolderPageVisible = Page == LibraryPage.Folder;
+        IsBackVisible = Page != LibraryPage.Home;
+        IsFilterBarVisible = Page is not LibraryPage.Home;
+        IsFavoritesFilterVisible = Page == LibraryPage.Songs;
+        IsTypeFilterVisible = Page == LibraryPage.Collections;
+        IsCreateAlbumVisible = Page == LibraryPage.Collections;
+        IsCreatePlaylistVisible = Page == LibraryPage.Collections;
+        IsCreateArtistVisible = Page == LibraryPage.Artists;
+        IsCreateFolderVisible = Page == LibraryPage.Folders;
+        IsEditOpenedArtistVisible = Page == LibraryPage.Artist;
+        IsEditOpenedFolderVisible = Page == LibraryPage.Folder;
+        PageTitle = Page switch
         {
-            showAlbums = false;
-            showPlaylists = false;
-            showTracks = true;
-        }
+            LibraryPage.Songs => "Все песни",
+            LibraryPage.Collections => "Альбомы и плейлисты",
+            LibraryPage.Artists => "Артисты",
+            LibraryPage.Artist => OpenedArtistName,
+            LibraryPage.Folders => "Папки",
+            LibraryPage.Folder => OpenedFolderTitle,
+            _ => "Библиотека"
+        };
 
-        if (kind == SearchKind.Album)
-        {
-            showTracks = false;
-            showAlbums = true;
-            showPlaylists = false;
-        }
-
-        if (kind == SearchKind.Playlist)
-        {
-            showTracks = false;
-            showAlbums = false;
-            showPlaylists = true;
-        }
-
-        IsAlbumGridVisible = showAlbums;
-        IsPlaylistListVisible = showPlaylists;
-        IsTrackListVisible = showTracks && !showAlbums && !showPlaylists;
-        IsCreateVisible = (Section == LibrarySection.Albums || Section == LibrarySection.Playlists) &&
-                          kind == SearchKind.All &&
-                          string.IsNullOrWhiteSpace(SearchQuery);
-        CreateLabel = Section == LibrarySection.Albums ? "Создать альбом" : "Создать плейлист";
+        SongsHubCount = FormatCount(AllTracks.Count, "песня", "песни", "песен");
+        CollectionsHubCount = FormatCount(_collectionCache.Count, "набор", "набора", "наборов");
+        ArtistsHubCount = FormatCount(_artistCache.Count, "артист", "артиста", "артистов");
+        FoldersHubCount = FormatCount(_folderCache.Count, "папка", "папки", "папок");
 
         var selectedCollectionId = SelectedCollectionTrack?.Id;
         VisibleTracks.Clear();
@@ -991,53 +1495,94 @@ public partial class MainViewModel : ObservableObject
 
         IsCollectionTracksEmpty = IsCollectionOpen && CollectionTracks.Count == 0;
 
-        Albums.Clear();
-        foreach (var album in SortCollections(FilterCollections(CollectionKind.Album)))
+        VisibleCollections.Clear();
+        foreach (var collection in SortCollections(FilterCollections()))
         {
-            Albums.Add(album);
+            VisibleCollections.Add(collection);
         }
 
-        Playlists.Clear();
-        foreach (var playlist in SortCollections(FilterCollections(CollectionKind.Playlist)))
+        VisibleArtists.Clear();
+        foreach (var artist in SortArtists(_artistCache.Where(item => MatchesSearch(item) && MatchesMood(item))))
         {
-            Playlists.Add(playlist);
+            VisibleArtists.Add(artist);
         }
 
-        IsTrackListEmpty = IsTrackListVisible && VisibleTracks.Count == 0;
-        if (IsAlbumGridVisible)
+        VisibleFolders.Clear();
+        foreach (var folder in SortFolders(_folderCache.Where(item => MatchesSearch(item) && MatchesMood(item))))
         {
-            IsTrackListEmpty = Albums.Count == 0;
+            VisibleFolders.Add(folder);
         }
-        else if (IsPlaylistListVisible)
+
+        ArtistAlbums.Clear();
+        if (OpenedArtist is not null)
         {
-            IsTrackListEmpty = Playlists.Count == 0;
+            var map = _collectionCache.ToDictionary(item => item.Id, StringComparer.Ordinal);
+            foreach (var id in OpenedArtist.AlbumIds)
+            {
+                if (map.TryGetValue(id, out var album) && MatchesSearch(album) && MatchesMood(album))
+                {
+                    ArtistAlbums.Add(album);
+                }
+            }
+
+            OpenedArtistCountText = FormatCount(ArtistAlbums.Count, "альбом", "альбома", "альбомов");
         }
+
+        IsArtistAlbumsEmpty = Page == LibraryPage.Artist && ArtistAlbums.Count == 0;
+
+        FolderCollections.Clear();
+        if (OpenedFolder is not null)
+        {
+            var map = _collectionCache.ToDictionary(item => item.Id, StringComparer.Ordinal);
+            foreach (var id in OpenedFolder.CollectionIds)
+            {
+                if (map.TryGetValue(id, out var collection) && MatchesSearch(collection) && MatchesMood(collection))
+                {
+                    FolderCollections.Add(collection);
+                }
+            }
+
+            OpenedFolderCountText = FormatCount(FolderCollections.Count, "набор", "набора", "наборов");
+        }
+
+        IsFolderCollectionsEmpty = Page == LibraryPage.Folder && FolderCollections.Count == 0;
+
+        IsTrackListEmpty = Page switch
+        {
+            LibraryPage.Songs => VisibleTracks.Count == 0,
+            LibraryPage.Collections => VisibleCollections.Count == 0,
+            LibraryPage.Artists => VisibleArtists.Count == 0,
+            LibraryPage.Folders => VisibleFolders.Count == 0,
+            _ => false
+        };
 
         RefreshStatus();
     }
 
     private IEnumerable<TrackItem> GetVisibleTrackSource()
     {
-        IEnumerable<TrackItem> source = AllTracks;
-        if (CurrentSearchKind() == SearchKind.Song)
+        if (Page != LibraryPage.Songs)
         {
-            source = AllTracks;
+            return Array.Empty<TrackItem>();
         }
-        else if (Section == LibrarySection.Favorites)
+
+        IEnumerable<TrackItem> source = AllTracks;
+        if (FavoritesOnly)
         {
             source = AllTracks.Where(track => track.IsFavorite);
-        }
-        else if (Section is LibrarySection.Albums or LibrarySection.Playlists)
-        {
-            source = Array.Empty<TrackItem>();
         }
 
         return SortTracks(source.Where(track => MatchesSearch(track) && MatchesMood(track)));
     }
 
-    private IEnumerable<CollectionItem> FilterCollections(CollectionKind kind)
+    private IEnumerable<CollectionItem> FilterCollections()
     {
-        return _collectionCache.Where(item => item.Kind == kind && MatchesSearch(item) && MatchesMood(item));
+        return _collectionCache.Where(item =>
+            (TypeFilterIndex == 0 ||
+             (TypeFilterIndex == 1 && item.Kind == CollectionKind.Album) ||
+             (TypeFilterIndex == 2 && item.Kind == CollectionKind.Playlist)) &&
+            MatchesSearch(item) &&
+            MatchesMood(item));
     }
 
     private bool MatchesSearch(TrackItem track)
@@ -1067,6 +1612,30 @@ public partial class MainViewModel : ObservableObject
                ContainsQuery(item.YearText);
     }
 
+    private bool MatchesSearch(ArtistItem item)
+    {
+        if (string.IsNullOrWhiteSpace(SearchQuery))
+        {
+            return true;
+        }
+
+        return ContainsQuery(item.Name) ||
+               ContainsQuery(item.Description) ||
+               item.TagToggles.Any(toggle => toggle.IsSelected && ContainsQuery(toggle.Name));
+    }
+
+    private bool MatchesSearch(FolderItem item)
+    {
+        if (string.IsNullOrWhiteSpace(SearchQuery))
+        {
+            return true;
+        }
+
+        return ContainsQuery(item.Title) ||
+               ContainsQuery(item.Description) ||
+               item.TagToggles.Any(toggle => toggle.IsSelected && ContainsQuery(toggle.Name));
+    }
+
     private bool MatchesMood(TrackItem track)
     {
         var selected = MoodFilters.Where(filter => filter.IsSelected).Select(filter => filter.Visual.Id).ToHashSet(StringComparer.Ordinal);
@@ -1088,6 +1657,28 @@ public partial class MainViewModel : ObservableObject
 
         var ids = item.Record.TrackIds.ToHashSet(StringComparer.Ordinal);
         return AllTracks.Any(track => ids.Contains(track.Id) && MatchesMood(track));
+    }
+
+    private bool MatchesMood(ArtistItem item)
+    {
+        var selected = MoodFilters.Where(filter => filter.IsSelected).Select(filter => filter.Visual.Id).ToHashSet(StringComparer.Ordinal);
+        if (selected.Count == 0)
+        {
+            return true;
+        }
+
+        return item.Record.Tags.Any(selected.Contains);
+    }
+
+    private bool MatchesMood(FolderItem item)
+    {
+        var selected = MoodFilters.Where(filter => filter.IsSelected).Select(filter => filter.Visual.Id).ToHashSet(StringComparer.Ordinal);
+        if (selected.Count == 0)
+        {
+            return true;
+        }
+
+        return item.Record.Tags.Any(selected.Contains);
     }
 
     private bool ContainsQuery(string value)
@@ -1121,48 +1712,96 @@ public partial class MainViewModel : ObservableObject
         return SortDescending ? ordered.Reverse() : ordered;
     }
 
+    private IEnumerable<ArtistItem> SortArtists(IEnumerable<ArtistItem> source)
+    {
+        var ordered = SortIndex switch
+        {
+            0 => source.OrderBy(item => item.Record.CreatedAt),
+            _ => source.OrderBy(item => item.Name, StringComparer.CurrentCultureIgnoreCase)
+        };
+
+        return SortDescending ? ordered.Reverse() : ordered;
+    }
+
+    private IEnumerable<FolderItem> SortFolders(IEnumerable<FolderItem> source)
+    {
+        var ordered = SortIndex switch
+        {
+            0 => source.OrderBy(item => item.Record.CreatedAt),
+            _ => source.OrderBy(item => item.Title, StringComparer.CurrentCultureIgnoreCase)
+        };
+
+        return SortDescending ? ordered.Reverse() : ordered;
+    }
+
+    private static string FormatCount(int count, string one, string few, string many)
+    {
+        var n = Math.Abs(count) % 100;
+        var n1 = n % 10;
+        var word = n is > 10 and < 20 ? many : n1 == 1 ? one : n1 is >= 2 and <= 4 ? few : many;
+        return $"{count} {word}";
+    }
+
     private void RefreshStatus()
     {
         var moodActive = MoodFilters.Any(filter => filter.IsSelected);
-        switch (Section)
+        switch (Page)
         {
-            case LibrarySection.Favorites:
-                StatusText = VisibleTracks.Count == 0
-                    ? (moodActive ? "Нет избранных с выбранным настроением" : "Нет избранных песен")
-                    : $"{VisibleTracks.Count} в избранном";
-                EmptyListText = moodActive ? "Нет избранных с выбранным настроением" : "Нет избранных песен";
+            case LibraryPage.Home:
+                StatusText = "Выберите раздел";
+                EmptyListText = string.Empty;
                 break;
-            case LibrarySection.Albums:
-                StatusText = Albums.Count == 0
-                    ? (moodActive ? "Нет альбомов с выбранным настроением" : "Нет альбомов")
-                    : $"{Albums.Count} альбомов";
-                EmptyListText = moodActive ? "Нет альбомов с выбранным настроением" : "Нет альбомов";
-                break;
-            case LibrarySection.Playlists:
-                StatusText = Playlists.Count == 0
-                    ? (moodActive ? "Нет плейлистов с выбранным настроением" : "Нет плейлистов")
-                    : $"{Playlists.Count} плейлистов";
-                EmptyListText = moodActive ? "Нет плейлистов с выбранным настроением" : "Нет плейлистов";
-                break;
-            default:
+            case LibraryPage.Songs:
                 if (AllTracks.Count == 0)
                 {
                     StatusText = "Нет аудиофайлов. Нажмите «Импорт», чтобы добавить.";
                     EmptyListText = "Нет аудиофайлов";
                 }
-                else if (moodActive)
+                else if (FavoritesOnly)
                 {
                     StatusText = VisibleTracks.Count == 0
-                        ? "Нет треков с выбранным настроением"
-                        : $"{VisibleTracks.Count} треков";
-                    EmptyListText = "Нет треков с выбранным настроением";
+                        ? (moodActive ? "Нет избранных с выбранным настроением" : "Нет избранных песен")
+                        : $"{VisibleTracks.Count} в избранном";
+                    EmptyListText = moodActive ? "Нет избранных с выбранным настроением" : "Нет избранных песен";
                 }
                 else
                 {
-                    StatusText = $"{AllTracks.Count} файлов";
-                    EmptyListText = "Нет аудиофайлов";
+                    StatusText = VisibleTracks.Count == 0
+                        ? (moodActive ? "Нет треков с выбранным настроением" : "Нет аудиофайлов")
+                        : FormatCount(VisibleTracks.Count, "песня", "песни", "песен");
+                    EmptyListText = moodActive ? "Нет треков с выбранным настроением" : "Нет аудиофайлов";
                 }
 
+                break;
+            case LibraryPage.Collections:
+                StatusText = VisibleCollections.Count == 0
+                    ? (moodActive ? "Нет наборов с выбранным настроением" : "Нет альбомов и плейлистов")
+                    : FormatCount(VisibleCollections.Count, "набор", "набора", "наборов");
+                EmptyListText = moodActive ? "Нет наборов с выбранным настроением" : "Нет альбомов и плейлистов";
+                break;
+            case LibraryPage.Artists:
+                StatusText = VisibleArtists.Count == 0
+                    ? (moodActive ? "Нет артистов с выбранным настроением" : "Нет артистов")
+                    : FormatCount(VisibleArtists.Count, "артист", "артиста", "артистов");
+                EmptyListText = moodActive ? "Нет артистов с выбранным настроением" : "Нет артистов";
+                break;
+            case LibraryPage.Artist:
+                StatusText = ArtistAlbums.Count == 0
+                    ? "Нет альбомов у артиста"
+                    : FormatCount(ArtistAlbums.Count, "альбом", "альбома", "альбомов");
+                EmptyListText = "Нет альбомов у артиста";
+                break;
+            case LibraryPage.Folders:
+                StatusText = VisibleFolders.Count == 0
+                    ? (moodActive ? "Нет папок с выбранным настроением" : "Нет папок")
+                    : FormatCount(VisibleFolders.Count, "папка", "папки", "папок");
+                EmptyListText = moodActive ? "Нет папок с выбранным настроением" : "Нет папок";
+                break;
+            case LibraryPage.Folder:
+                StatusText = FolderCollections.Count == 0
+                    ? "В папке пусто"
+                    : FormatCount(FolderCollections.Count, "набор", "набора", "наборов");
+                EmptyListText = "В папке пусто";
                 break;
         }
     }

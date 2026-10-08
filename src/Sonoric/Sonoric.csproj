@@ -27,5 +27,8 @@
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
     <PackageReference Include="LibVLCSharp.Avalonia" Version="3.10.1" />
     <PackageReference Include="TagLibSharp" Version="2.3.0" />
+    <PackageReference Include="Zeroconf" Version="3.7.16" />
+    <PackageReference Include="QRCoder" Version="1.7.0" />
+    <PackageReference Include="Makaretu.Dns.Multicast.New" Version="0.38.0" />
   </ItemGroup>
 </Project>

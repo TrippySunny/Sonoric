@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using Avalonia.Media;
+using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -12,7 +13,10 @@ public partial class SettingsViewModel : ObservableObject
 {
     private readonly UpdateService _updates;
     private readonly LibraryService _library;
+    private readonly LocalSyncHost _syncHost;
+    private readonly LocalSyncClient _syncClient;
     private readonly Action<string> _applyDisplayName;
+    private readonly Action _libraryChanged;
     private readonly Action _persist;
     private readonly Action _shutdown;
     private UpdateInfo? _pending;
@@ -20,25 +24,40 @@ public partial class SettingsViewModel : ObservableObject
     private bool _updatingTagColor;
     private string? _editingTagId;
 
-    public SettingsViewModel(UpdateService updates, LibraryService library, string displayName, Action<string> applyDisplayName, Action persist, Action shutdown)
+    public SettingsViewModel(
+        UpdateService updates,
+        LibraryService library,
+        LocalSyncHost syncHost,
+        LocalSyncClient syncClient,
+        string displayName,
+        Action<string> applyDisplayName,
+        Action libraryChanged,
+        Action persist,
+        Action shutdown)
     {
         _updates = updates;
         _library = library;
+        _syncHost = syncHost;
+        _syncClient = syncClient;
         _applyDisplayName = applyDisplayName;
+        _libraryChanged = libraryChanged;
         _persist = persist;
         _shutdown = shutdown;
         CustomTags = new ObservableCollection<TagListItem>();
+        DiscoveredDevices = new ObservableCollection<SyncDeviceItem>();
         DisplayName = displayName;
         VersionText = AppRuntime.VersionText;
         PlatformText = AppRuntime.Rid;
         StatusText = "Проверка не выполнялась";
         ResetTagEditor();
         ReloadTags();
+        RefreshBroadcastUi();
     }
 
     public string VersionText { get; }
     public string PlatformText { get; }
     public ObservableCollection<TagListItem> CustomTags { get; }
+    public ObservableCollection<SyncDeviceItem> DiscoveredDevices { get; }
 
     [ObservableProperty]
     private string displayName = string.Empty;
@@ -90,6 +109,39 @@ public partial class SettingsViewModel : ObservableObject
 
     [ObservableProperty]
     private string? tagValidationMessage;
+
+    [ObservableProperty]
+    private bool isAdvertising;
+
+    [ObservableProperty]
+    private string syncToggleLabel = "Включить синхронизацию";
+
+    [ObservableProperty]
+    private string pinText = string.Empty;
+
+    [ObservableProperty]
+    private Bitmap? qrImage;
+
+    [ObservableProperty]
+    private bool hasQrImage;
+
+    [ObservableProperty]
+    private string pairingInput = string.Empty;
+
+    [ObservableProperty]
+    private bool isSyncBusy;
+
+    [ObservableProperty]
+    private string syncStatusText = "Синхронизация выключена";
+
+    [ObservableProperty]
+    private double syncProgress;
+
+    [ObservableProperty]
+    private bool isSyncTransferring;
+
+    [ObservableProperty]
+    private bool hasDiscoveredDevices;
 
     partial void OnTagRedChanged(double value)
     {
@@ -303,6 +355,165 @@ public partial class SettingsViewModel : ObservableObject
         TagPreview = new SolidColorBrush(color);
         TagHex = $"#{color.R:X2}{color.G:X2}{color.B:X2}";
         _updatingTagColor = false;
+    }
+
+    [RelayCommand]
+    private async Task ToggleSyncAsync()
+    {
+        if (IsSyncBusy)
+        {
+            return;
+        }
+
+        IsSyncBusy = true;
+        try
+        {
+            if (_syncHost.IsAdvertising)
+            {
+                await _syncHost.StopAsync();
+                SyncStatusText = "Синхронизация выключена";
+            }
+            else
+            {
+                await _syncHost.StartAsync(DisplayName);
+                SyncStatusText = $"Виден в локальной сети как «{(string.IsNullOrWhiteSpace(DisplayName) ? "Sonoric" : DisplayName.Trim())}»";
+            }
+
+            RefreshBroadcastUi();
+        }
+        catch (Exception exception)
+        {
+            SyncStatusText = exception.Message;
+        }
+        finally
+        {
+            IsSyncBusy = false;
+        }
+    }
+
+    [RelayCommand]
+    private async Task ScanNetworkAsync()
+    {
+        if (IsSyncBusy)
+        {
+            return;
+        }
+
+        IsSyncBusy = true;
+        try
+        {
+            await ScanCoreAsync();
+        }
+        finally
+        {
+            IsSyncBusy = false;
+        }
+    }
+
+    private async Task ScanCoreAsync()
+    {
+        SyncStatusText = "Поиск компьютеров в локальной сети…";
+        var hosts = await _syncClient.ScanAsync();
+        DiscoveredDevices.Clear();
+        foreach (var host in hosts)
+        {
+            var item = new SyncDeviceItem(host, _syncClient.IsTrusted(host.Uuid))
+            {
+                PullRequested = device => _ = PullFromAsync(device)
+            };
+            DiscoveredDevices.Add(item);
+        }
+
+        HasDiscoveredDevices = DiscoveredDevices.Count > 0;
+        SyncStatusText = HasDiscoveredDevices
+            ? $"Найдено: {DiscoveredDevices.Count}"
+            : "В сети нет других компьютеров с включённой синхронизацией";
+    }
+
+    private async Task PullFromAsync(SyncDeviceItem item)
+    {
+        if (IsSyncBusy)
+        {
+            return;
+        }
+
+        IsSyncBusy = true;
+        IsSyncTransferring = true;
+        SyncProgress = 0;
+        try
+        {
+            var peer = _syncClient.TryAutoPair(item.Host);
+            var pin = PairingInput;
+            if (peer is null)
+            {
+                peer = _syncClient.TryPair(item.Host, pin);
+                if (peer is null)
+                {
+                    SyncStatusText = "Неверный PIN. Введите код или JSON из QR.";
+                    return;
+                }
+
+                SyncStatusText = $"Сопряжение с «{item.Name}» успешно. Загрузка библиотеки…";
+            }
+            else
+            {
+                SyncStatusText = $"Доверенный компьютер «{item.Name}». Загрузка библиотеки…";
+            }
+
+            var progress = new Progress<double>(value =>
+            {
+                Dispatcher.UIThread.Post(() => SyncProgress = value);
+            });
+            var added = await _syncClient.PullLibraryAsync(peer, DisplayName, pin, _library, progress);
+            _libraryChanged();
+            var addedStatus = added == 0
+                ? $"Библиотека с «{item.Name}» уже была у вас"
+                : $"С «{item.Name}» добавлено песен: {added}";
+            try
+            {
+                await ScanCoreAsync();
+            }
+            catch
+            {
+            }
+
+            SyncStatusText = addedStatus;
+        }
+        catch (Exception exception)
+        {
+            SyncStatusText = exception.Message;
+        }
+        finally
+        {
+            IsSyncTransferring = false;
+            IsSyncBusy = false;
+        }
+    }
+
+    private void RefreshBroadcastUi()
+    {
+        IsAdvertising = _syncHost.IsAdvertising;
+        SyncToggleLabel = IsAdvertising ? "Выключить синхронизацию" : "Включить синхронизацию";
+        PinText = _syncHost.Pin ?? string.Empty;
+        QrImage?.Dispose();
+        QrImage = null;
+        HasQrImage = false;
+        if (!IsAdvertising)
+        {
+            return;
+        }
+
+        try
+        {
+            var png = _syncHost.CreateQrPng();
+            using var stream = new MemoryStream(png);
+            QrImage = new Bitmap(stream);
+            HasQrImage = true;
+        }
+        catch
+        {
+            HasQrImage = false;
+        }
     }
 
     public void CommitProfile()

@@ -5,10 +5,10 @@
         x:DataType="vm:SettingsViewModel"
         Title="Настройки"
         Icon="/Assets/sonoric.png"
-        Width="540"
-        Height="720"
-        MinWidth="460"
-        MinHeight="420"
+        Width="560"
+        Height="820"
+        MinWidth="480"
+        MinHeight="480"
         Background="#000000"
         WindowStartupLocation="CenterOwner"
         CanResize="True">
@@ -23,10 +23,81 @@
                 <TextBlock Text="Настройки" FontSize="20" FontWeight="SemiBold"/>
                 <TextBlock Text="Имя" Foreground="#8A8A8A"/>
                 <TextBox Text="{Binding DisplayName}" Watermark="Ваше имя"/>
-                <TextBlock Text="Этим именем подписываются ваши плейлисты."
+                <TextBlock Text="Этим именем подписываются ваши плейлисты и видят вас при синхронизации."
                            Foreground="#6A6A6A"
                            FontSize="12"
                            TextWrapping="Wrap"/>
+
+                <TextBlock Text="Синхронизация"
+                           FontSize="16"
+                           FontWeight="SemiBold"
+                           Margin="0,8,0,0"/>
+                <TextBlock Text="Только локальная сеть. Интернет и внешние серверы не используются."
+                           Foreground="#6A6A6A"
+                           FontSize="12"
+                           TextWrapping="Wrap"/>
+                <Button Classes="app-button"
+                        Content="{Binding SyncToggleLabel}"
+                        Command="{Binding ToggleSyncCommand}"
+                        IsEnabled="{Binding !IsSyncBusy}"
+                        HorizontalAlignment="Left"/>
+                <StackPanel Spacing="10" IsVisible="{Binding IsAdvertising}">
+                    <TextBlock Text="PIN для сопряжения" Foreground="#8A8A8A"/>
+                    <TextBlock Text="{Binding PinText}"
+                               FontSize="28"
+                               FontWeight="SemiBold"
+                               LetterSpacing="4"/>
+                    <Border Width="180"
+                            Height="180"
+                            Background="#FFFFFF"
+                            CornerRadius="6"
+                            IsVisible="{Binding HasQrImage}">
+                        <Image Source="{Binding QrImage}" Stretch="Uniform" Margin="8"/>
+                    </Border>
+                </StackPanel>
+                <TextBox Text="{Binding PairingInput}"
+                         Watermark="PIN или JSON из QR"/>
+                <Button Classes="app-button"
+                        Content="Найти компьютеры"
+                        Command="{Binding ScanNetworkCommand}"
+                        IsEnabled="{Binding !IsSyncBusy}"
+                        HorizontalAlignment="Left"/>
+                <ItemsControl ItemsSource="{Binding DiscoveredDevices}"
+                              IsVisible="{Binding HasDiscoveredDevices}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:SyncDeviceItem">
+                            <Border Padding="0,10"
+                                    BorderBrush="#2A2A2A"
+                                    BorderThickness="0,0,0,1">
+                                <DockPanel>
+                                    <Button DockPanel.Dock="Right"
+                                            Classes="app-button"
+                                            Content="Скачать библиотеку"
+                                            Command="{Binding PullCommand}"
+                                            Padding="10,6"/>
+                                    <StackPanel Spacing="2">
+                                        <TextBlock Text="{Binding Name}" FontWeight="Medium"/>
+                                        <TextBlock Text="{Binding AddressText}"
+                                                   FontSize="12"
+                                                   Foreground="#8A8A8A"/>
+                                        <TextBlock Text="{Binding TrustLabel}"
+                                                   FontSize="12"
+                                                   Foreground="#C8C8C8"/>
+                                    </StackPanel>
+                                </DockPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <ProgressBar Minimum="0"
+                             Maximum="100"
+                             Height="8"
+                             Value="{Binding SyncProgress}"
+                             IsVisible="{Binding IsSyncTransferring}"/>
+                <TextBlock Text="{Binding SyncStatusText}"
+                           Foreground="#C8C8C8"
+                           TextWrapping="Wrap"/>
+
                 <Grid ColumnDefinitions="140,*" RowDefinitions="Auto,Auto" RowSpacing="8">
                     <TextBlock Text="Версия" Foreground="#8A8A8A"/>
                     <TextBlock Grid.Column="1" Text="{Binding VersionText}"/>
