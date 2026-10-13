@@ -10,8 +10,6 @@
 
         var locale = document.documentElement.lang === "en" ? "en" : "ru";
         var name = form.elements.name.value.trim();
-        var email = form.elements.email.value.trim();
-        var phone = form.elements.phone.value.trim();
         var topic = form.elements.topic.value;
         var message = form.elements.message.value.trim();
         var isBug = topic === "bug";
@@ -25,22 +23,14 @@
                 "## Details",
                 message,
                 "",
-                "## Contact",
-                "- Name: " + name,
-                "- Email: " + email
+                "- Name: " + name
             ]
             : [
                 "## Описание",
                 message,
                 "",
-                "## Контакты",
-                "- Имя: " + name,
-                "- E-mail: " + email
+                "- Имя: " + name
             ];
-
-        if (phone) {
-            body.push(locale === "en" ? "- Phone: " + phone : "- Телефон: " + phone);
-        }
 
         var url = "https://github.com/TrippySunny/Sonoric/issues/new"
             + "?labels=" + encodeURIComponent(isBug ? "bug" : "enhancement")
