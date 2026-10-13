@@ -3,17 +3,130 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sonoric — Официальный сайт</title>
-    <style>
-        body { font-family: sans-serif; max-width: 800px; margin: 40px auto; padding: 0 20px; line-height: 1.6; }
-        h1 { color: #24292e; }
-        .btn { display: inline-block; background: #2ea44f; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: bold; }
-    </style>
+    <meta name="description" content="Sonoric — бесплатный автономный кроссплатформенный музыкальный плеер с открытым исходным кодом, офлайн-синхронизацией и аудио-реактивными шейдерами.">
+    <title>Sonoric — автономный музыкальный плеер</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="js/main.js" defer></script>
 </head>
 <body>
-    <h1>Проект Sonoric</h1>
-    <p>Добро пожаловать на страницу моей программы! Здесь скоро появится подробное описание, инструкция по установке и скриншоты.</p>
-    
-    <a href="https://github.com/TrippySunny/Sonoric" class="btn">Исходный код на GitHub</a>
+    <a class="skip-link" href="#main">Перейти к содержимому</a>
+    <header class="site-header">
+        <div class="site-header__inner">
+            <a class="site-logo" href="index.html">
+                <svg class="site-logo__mark" viewBox="0 0 512 512" aria-hidden="true" focusable="false">
+                    <rect width="512" height="512" rx="118" fill="#000000"></rect>
+                    <g fill="#ffffff">
+                        <circle cx="176" cy="336" r="86"></circle>
+                        <rect x="236" y="108" width="32" height="232"></rect>
+                        <rect x="236" y="108" width="152" height="36" rx="16"></rect>
+                    </g>
+                </svg>
+                <span class="site-logo__name">Sonoric</span>
+            </a>
+            <nav class="site-nav" aria-label="Основная навигация">
+                <ul class="site-nav__list">
+                    <li class="site-nav__item">
+                        <a class="site-nav__link site-nav__link--current" href="index.html" aria-current="page">Главная</a>
+                    </li>
+                    <li class="site-nav__item">
+                        <a class="site-nav__link" href="index.html#features">Преимущества</a>
+                    </li>
+                    <li class="site-nav__item">
+                        <a class="site-nav__link" href="product.html">Плеер</a>
+                    </li>
+                    <li class="site-nav__item">
+                        <a class="site-nav__link" href="order.html">Баги и идеи</a>
+                    </li>
+                    <li class="site-nav__item">
+                        <a class="site-nav__link" href="contacts.html">Контакты</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+    <main id="main">
+        <section class="hero" aria-labelledby="hero-title">
+            <div class="hero__content">
+                <p class="hero__eyebrow">Open Source · Offline First</p>
+                <h1 class="hero__title" id="hero-title">Sonoric</h1>
+                <p class="hero__tagline">Standalone and multifunctional music player</p>
+                <p class="hero__text">Бесплатный автономный кроссплатформенный плеер с открытым исходным кодом. Работает с локальной библиотекой, синхронизирует её между устройствами без стриминговых сервисов и строит аудио-реактивные шейдеры по ритму, басу и частотам.</p>
+                <div class="hero__actions">
+                    <a class="button button--success" href="https://github.com/TrippySunny/Sonoric/releases/latest">Скачать</a>
+                    <button class="button button--primary" type="button" id="demo-open-button">Посмотреть демо</button>
+                </div>
+            </div>
+            <div class="hero__visual" aria-hidden="true">
+                <div class="eq-bars">
+                    <span class="eq-bars__bar"></span>
+                    <span class="eq-bars__bar"></span>
+                    <span class="eq-bars__bar"></span>
+                    <span class="eq-bars__bar"></span>
+                    <span class="eq-bars__bar"></span>
+                    <span class="eq-bars__bar"></span>
+                    <span class="eq-bars__bar"></span>
+                    <span class="eq-bars__bar"></span>
+                </div>
+            </div>
+        </section>
+        <section class="features" id="features" aria-labelledby="features-title">
+            <div class="features__intro">
+                <h2 class="features__title" id="features-title">Почему Sonoric</h2>
+                <p class="features__lead">Локальные файлы, живой визуализатор и библиотека, которой вы владеете сами.</p>
+            </div>
+            <div class="features__grid">
+                <article class="feature-card">
+                    <h3 class="feature-card__title">Complete Offline Mode</h3>
+                    <p class="feature-card__text">Воспроизведение, теги и библиотека работают без интернета. Данные остаются на устройстве и доступны в любой момент.</p>
+                </article>
+                <article class="feature-card">
+                    <h3 class="feature-card__title">True Cross-Platform</h3>
+                    <p class="feature-card__text">Нативная работа на Windows и Linux, с расчётом на ту же модель библиотеки на мобильных платформах.</p>
+                </article>
+                <article class="feature-card">
+                    <h3 class="feature-card__title">Audio-Reactive Shaders</h3>
+                    <p class="feature-card__text">GPU-шейдеры анализируют спектр и волну: цвет, масштаб и композиция реагируют на ритм, бас и частоты текущего трека.</p>
+                </article>
+                <article class="feature-card">
+                    <h3 class="feature-card__title">Format Omnivore</h3>
+                    <p class="feature-card__text">MP3, FLAC, WAV, OGG, M4A и соседние форматы открываются без отдельных кодеков и ручной настройки.</p>
+                </article>
+            </div>
+        </section>
+    </main>
+    <dialog class="demo-dialog" id="demo-dialog" aria-labelledby="demo-dialog-title">
+        <div class="demo-dialog__panel">
+            <div class="demo-dialog__head">
+                <h2 class="demo-dialog__title" id="demo-dialog-title">Демо Sonoric</h2>
+                <button class="demo-dialog__close" type="button" id="demo-close-button" aria-label="Закрыть">Х</button>
+            </div>
+            <div class="demo-player" aria-hidden="true">
+                <div class="demo-player__cover"></div>
+                <div class="demo-player__meta">
+                    <p class="demo-player__track">Night Drive</p>
+                    <p class="demo-player__artist">Library · FLAC</p>
+                    <div class="demo-player__wave">
+                        <span class="demo-player__bar"></span>
+                        <span class="demo-player__bar"></span>
+                        <span class="demo-player__bar"></span>
+                        <span class="demo-player__bar"></span>
+                        <span class="demo-player__bar"></span>
+                    </div>
+                </div>
+            </div>
+            <p class="demo-dialog__text">Статический макет главного окна: локальная библиотека, аудио-реактивный визуализатор и теги настроения без привязки к стримингу.</p>
+        </div>
+    </dialog>
+    <footer class="site-footer">
+        <div class="site-footer__inner">
+            <p class="site-footer__copy">© 2026 Sonoric. Бесплатный open-source плеер.</p>
+            <ul class="site-footer__list">
+                <li class="site-footer__item"><a class="site-footer__link" href="product.html">Плеер</a></li>
+                <li class="site-footer__item"><a class="site-footer__link" href="order.html">Баги и идеи</a></li>
+                <li class="site-footer__item"><a class="site-footer__link" href="contacts.html">Контакты</a></li>
+                <li class="site-footer__item"><a class="site-footer__link" href="https://github.com/TrippySunny/Sonoric">GitHub</a></li>
+            </ul>
+        </div>
+    </footer>
 </body>
 </html>
