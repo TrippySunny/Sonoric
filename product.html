@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Описание сборки Sonoric: возможности плеера, поддерживаемые форматы, системные требования и репозиторий на GitHub.">
     <title>Sonoric — описание плеера</title>
+    <link rel="alternate" hreflang="ru" href="product.html">
+    <link rel="alternate" hreflang="en" href="en/product.html">
     <link rel="stylesheet" href="css/style.css">
     <script src="js/main.js" defer></script>
 </head>
@@ -23,25 +25,31 @@
                 </svg>
                 <span class="site-logo__name">Sonoric</span>
             </a>
-            <nav class="site-nav" aria-label="Основная навигация">
-                <ul class="site-nav__list">
-                    <li class="site-nav__item">
-                        <a class="site-nav__link" href="index.html">Главная</a>
-                    </li>
-                    <li class="site-nav__item">
-                        <a class="site-nav__link" href="index.html#features">Преимущества</a>
-                    </li>
-                    <li class="site-nav__item">
-                        <a class="site-nav__link site-nav__link--current" href="product.html" aria-current="page">Плеер</a>
-                    </li>
-                    <li class="site-nav__item">
-                        <a class="site-nav__link" href="order.html">Баги и идеи</a>
-                    </li>
-                    <li class="site-nav__item">
-                        <a class="site-nav__link" href="contacts.html">Контакты</a>
-                    </li>
-                </ul>
-            </nav>
+            <div class="site-header__tools">
+                <nav class="site-nav" aria-label="Основная навигация">
+                    <ul class="site-nav__list">
+                        <li class="site-nav__item">
+                            <a class="site-nav__link" href="index.html">Главная</a>
+                        </li>
+                        <li class="site-nav__item">
+                            <a class="site-nav__link" href="index.html#features">Преимущества</a>
+                        </li>
+                        <li class="site-nav__item">
+                            <a class="site-nav__link site-nav__link--current" href="product.html" aria-current="page">Плеер</a>
+                        </li>
+                        <li class="site-nav__item">
+                            <a class="site-nav__link" href="order.html">Баги и идеи</a>
+                        </li>
+                        <li class="site-nav__item">
+                            <a class="site-nav__link" href="contacts.html">Контакты</a>
+                        </li>
+                    </ul>
+                </nav>
+                <nav class="lang-switch" aria-label="Язык">
+                    <a class="lang-switch__link lang-switch__link--current" href="product.html" hreflang="ru" lang="ru" aria-current="true">RU</a>
+                    <a class="lang-switch__link" href="en/product.html" hreflang="en" lang="en">EN</a>
+                </nav>
+            </div>
         </div>
     </header>
     <main id="main">
@@ -54,15 +62,15 @@
             <h2 class="section-title" id="capabilities-title">Что умеет текущая сборка</h2>
             <div class="capability-grid__list">
                 <article class="feature-card">
-                    <h3 class="feature-card__title">Custom Mood Tagging</h3>
+                    <h3 class="feature-card__title">Свои теги настроения</h3>
                     <p class="feature-card__text">Свои категории настроения вместо чужих жанров. Фильтрация архива по комбинации тегов: на треках, папках и артистах.</p>
                 </article>
                 <article class="feature-card">
-                    <h3 class="feature-card__title">Library Synchronization</h3>
+                    <h3 class="feature-card__title">Синхронизация библиотеки</h3>
                     <p class="feature-card__text">Синхронизация коллекции, пользовательских тегов и настроек между компьютерами и мобильными устройствами в локальной сети.</p>
                 </article>
                 <article class="feature-card">
-                    <h3 class="feature-card__title">Playlist Architecture</h3>
+                    <h3 class="feature-card__title">Плейлисты</h3>
                     <p class="feature-card__text">Экспорт и импорт подборок в лёгком контейнере <code>.sonoric</code> — без привязки к чужому облаку.</p>
                 </article>
                 <article class="feature-card">
@@ -121,8 +129,8 @@
                         </tr>
                         <tr>
                             <th scope="row">Графика</th>
-                            <td>GPU с поддержкой шейдеров</td>
-                            <td>Нужна для Audio-Reactive Shaders</td>
+                            <td>Видеокарта с поддержкой шейдеров</td>
+                            <td>Нужна для аудио-реактивного визуализатора</td>
                         </tr>
                         <tr>
                             <th scope="row">Сеть</th>
@@ -136,17 +144,17 @@
         <section class="repo" aria-labelledby="repo-title">
             <h2 class="section-title" id="repo-title">Исходный код</h2>
             <article class="repo-card">
-                <span class="repo-card__badge">Open Source</span>
+                <span class="repo-card__badge">Открытый код</span>
                 <p class="repo-card__eyebrow">GitHub</p>
                 <h3 class="repo-card__title">TrippySunny / Sonoric</h3>
-                <p class="repo-card__text">Репозиторий плеера: лицензия MIT, скрипты установки для Linux, исходники интерфейса и визуализатора. Сборки публикуются в Releases.</p>
+                <p class="repo-card__text">Репозиторий плеера: лицензия MIT, скрипты установки для Linux, исходники интерфейса и визуализатора. Сборки публикуются в разделе релизов.</p>
                 <a class="button button--primary" href="https://github.com/TrippySunny/Sonoric">Открыть репозиторий</a>
             </article>
         </section>
     </main>
     <footer class="site-footer">
         <div class="site-footer__inner">
-            <p class="site-footer__copy">© 2026 Sonoric. Бесплатный open-source плеер.</p>
+            <p class="site-footer__copy">© 2026 Sonoric. Бесплатный плеер с открытым исходным кодом.</p>
             <ul class="site-footer__list">
                 <li class="site-footer__item"><a class="site-footer__link" href="product.html">Плеер</a></li>
                 <li class="site-footer__item"><a class="site-footer__link" href="order.html">Баги и идеи</a></li>

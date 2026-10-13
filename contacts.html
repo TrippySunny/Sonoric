@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Контакты разработчика Sonoric — TrippySunny. GitHub и форма баг-репортов.">
     <title>Sonoric — контакты</title>
+    <link rel="alternate" hreflang="ru" href="contacts.html">
+    <link rel="alternate" hreflang="en" href="en/contacts.html">
     <link rel="stylesheet" href="css/style.css">
     <script src="js/main.js" defer></script>
 </head>
@@ -23,32 +25,38 @@
                 </svg>
                 <span class="site-logo__name">Sonoric</span>
             </a>
-            <nav class="site-nav" aria-label="Основная навигация">
-                <ul class="site-nav__list">
-                    <li class="site-nav__item">
-                        <a class="site-nav__link" href="index.html">Главная</a>
-                    </li>
-                    <li class="site-nav__item">
-                        <a class="site-nav__link" href="index.html#features">Преимущества</a>
-                    </li>
-                    <li class="site-nav__item">
-                        <a class="site-nav__link" href="product.html">Плеер</a>
-                    </li>
-                    <li class="site-nav__item">
-                        <a class="site-nav__link" href="order.html">Баги и идеи</a>
-                    </li>
-                    <li class="site-nav__item">
-                        <a class="site-nav__link site-nav__link--current" href="contacts.html" aria-current="page">Контакты</a>
-                    </li>
-                </ul>
-            </nav>
+            <div class="site-header__tools">
+                <nav class="site-nav" aria-label="Основная навигация">
+                    <ul class="site-nav__list">
+                        <li class="site-nav__item">
+                            <a class="site-nav__link" href="index.html">Главная</a>
+                        </li>
+                        <li class="site-nav__item">
+                            <a class="site-nav__link" href="index.html#features">Преимущества</a>
+                        </li>
+                        <li class="site-nav__item">
+                            <a class="site-nav__link" href="product.html">Плеер</a>
+                        </li>
+                        <li class="site-nav__item">
+                            <a class="site-nav__link" href="order.html">Баги и идеи</a>
+                        </li>
+                        <li class="site-nav__item">
+                            <a class="site-nav__link site-nav__link--current" href="contacts.html" aria-current="page">Контакты</a>
+                        </li>
+                    </ul>
+                </nav>
+                <nav class="lang-switch" aria-label="Язык">
+                    <a class="lang-switch__link lang-switch__link--current" href="contacts.html" hreflang="ru" lang="ru" aria-current="true">RU</a>
+                    <a class="lang-switch__link" href="en/contacts.html" hreflang="en" lang="en">EN</a>
+                </nav>
+            </div>
         </div>
     </header>
     <main id="main">
         <header class="page-hero">
             <p class="page-hero__eyebrow">Связь</p>
             <h1 class="page-hero__title">Контакты</h1>
-            <p class="page-hero__text">Sonoric делает один разработчик. Пишите через GitHub или форму баг-репортов и идей.</p>
+            <p class="page-hero__text">Sonoric делает один разработчик. Пишите через GitHub или форму багов и идей — она создаёт публичный тикет в Issues.</p>
         </header>
         <section class="contacts" aria-labelledby="contacts-title">
             <h2 class="visually-hidden" id="contacts-title">Способы связи</h2>
@@ -57,12 +65,12 @@
                     <h3 class="contact-card__title">Разработчик</h3>
                     <address class="contact-card__address">
                         <p class="contact-card__name">TrippySunny</p>
-                        <p class="contact-card__role">Автор и мейнтейнер Sonoric</p>
+                        <p class="contact-card__role">Автор Sonoric</p>
                     </address>
                 </article>
                 <article class="contact-card">
                     <h3 class="contact-card__title">GitHub</h3>
-                    <p class="contact-card__text">Профиль, репозиторий плеера, issues и релизы.</p>
+                    <p class="contact-card__text">Профиль, репозиторий плеера, тикеты и релизы.</p>
                     <ul class="contact-card__links">
                         <li>
                             <a class="contact-card__link" href="https://github.com/TrippySunny">github.com/TrippySunny</a>
@@ -70,11 +78,14 @@
                         <li>
                             <a class="contact-card__link" href="https://github.com/TrippySunny/Sonoric">Репозиторий Sonoric</a>
                         </li>
+                        <li>
+                            <a class="contact-card__link" href="https://github.com/TrippySunny/Sonoric/issues">Список тикетов</a>
+                        </li>
                     </ul>
                 </article>
                 <article class="contact-card">
                     <h3 class="contact-card__title">Баги и идеи</h3>
-                    <p class="contact-card__text">Форма на сайте: баг-репорт, предложение по шейдерам или идея для фичи.</p>
+                    <p class="contact-card__text">Форма на сайте собирает обращение и открывает новый тикет в GitHub Issues.</p>
                     <a class="button button--primary" href="order.html#feedback">Перейти к форме</a>
                 </article>
             </div>
@@ -82,7 +93,7 @@
     </main>
     <footer class="site-footer">
         <div class="site-footer__inner">
-            <p class="site-footer__copy">© 2026 Sonoric. Бесплатный open-source плеер.</p>
+            <p class="site-footer__copy">© 2026 Sonoric. Бесплатный плеер с открытым исходным кодом.</p>
             <ul class="site-footer__list">
                 <li class="site-footer__item"><a class="site-footer__link" href="product.html">Плеер</a></li>
                 <li class="site-footer__item"><a class="site-footer__link" href="order.html">Баги и идеи</a></li>

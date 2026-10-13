@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Sonoric build notes: player features, supported formats, system requirements, and the GitHub repository.">
+    <title>Sonoric — player</title>
+    <link rel="alternate" hreflang="ru" href="../product.html">
+    <link rel="alternate" hreflang="en" href="product.html">
+    <link rel="stylesheet" href="../css/style.css">
+    <script src="../js/main.js" defer></script>
+</head>
+<body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="site-header">
+        <div class="site-header__inner">
+            <a class="site-logo" href="index.html">
+                <svg class="site-logo__mark" viewBox="0 0 512 512" aria-hidden="true" focusable="false">
+                    <rect width="512" height="512" rx="118" fill="#000000"></rect>
+                    <g fill="#ffffff">
+                        <circle cx="176" cy="336" r="86"></circle>
+                        <rect x="236" y="108" width="32" height="232"></rect>
+                        <rect x="236" y="108" width="152" height="36" rx="16"></rect>
+                    </g>
+                </svg>
+                <span class="site-logo__name">Sonoric</span>
+            </a>
+            <div class="site-header__tools">
+                <nav class="site-nav" aria-label="Primary">
+                    <ul class="site-nav__list">
+                        <li class="site-nav__item">
+                            <a class="site-nav__link" href="index.html">Home</a>
+                        </li>
+                        <li class="site-nav__item">
+                            <a class="site-nav__link" href="index.html#features">Features</a>
+                        </li>
+                        <li class="site-nav__item">
+                            <a class="site-nav__link site-nav__link--current" href="product.html" aria-current="page">Player</a>
+                        </li>
+                        <li class="site-nav__item">
+                            <a class="site-nav__link" href="order.html">Bugs &amp; ideas</a>
+                        </li>
+                        <li class="site-nav__item">
+                            <a class="site-nav__link" href="contacts.html">Contact</a>
+                        </li>
+                    </ul>
+                </nav>
+                <nav class="lang-switch" aria-label="Language">
+                    <a class="lang-switch__link" href="../product.html" hreflang="ru" lang="ru">RU</a>
+                    <a class="lang-switch__link lang-switch__link--current" href="product.html" hreflang="en" lang="en" aria-current="true">EN</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+    <main id="main">
+        <header class="page-hero">
+            <p class="page-hero__eyebrow">Build 1.0.0</p>
+            <h1 class="page-hero__title">Player capabilities</h1>
+            <p class="page-hero__text">Sonoric reads local audio files, visualizes them with shaders in real time, and keeps the library in sync across devices.</p>
+        </header>
+        <section class="capability-grid" aria-labelledby="capabilities-title">
+            <h2 class="section-title" id="capabilities-title">What this build can do</h2>
+            <div class="capability-grid__list">
+                <article class="feature-card">
+                    <h3 class="feature-card__title">Custom mood tags</h3>
+                    <p class="feature-card__text">Your own mood categories instead of someone else’s genres. Filter the archive by tag combinations on tracks, folders, and artists.</p>
+                </article>
+                <article class="feature-card">
+                    <h3 class="feature-card__title">Library sync</h3>
+                    <p class="feature-card__text">Sync the collection, custom tags, and settings between computers and mobile devices on the local network.</p>
+                </article>
+                <article class="feature-card">
+                    <h3 class="feature-card__title">Playlists</h3>
+                    <p class="feature-card__text">Export and import collections in a lightweight <code>.sonoric</code> container, with no third-party cloud lock-in.</p>
+                </article>
+                <article class="feature-card">
+                    <h3 class="feature-card__title">Library</h3>
+                    <p class="feature-card__text">Four sections: all songs, albums and playlists, artist pages, and folders of albums and playlists. Favorites is a filter, not a separate section.</p>
+                </article>
+            </div>
+        </section>
+        <section class="specs" aria-labelledby="specs-title">
+            <h2 class="section-title" id="specs-title">Formats and requirements</h2>
+            <div class="specs__frame">
+                <table class="spec-table">
+                    <caption class="spec-table__caption">Supported audio formats and system requirements for Sonoric 1.0.0</caption>
+                    <thead>
+                        <tr>
+                            <th scope="col">Item</th>
+                            <th scope="col">Value</th>
+                            <th scope="col">Notes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <th scope="row">MP3</th>
+                            <td>Supported</td>
+                            <td>Common lossy format</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">FLAC</th>
+                            <td>Supported</td>
+                            <td>Lossless compression</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">WAV</th>
+                            <td>Supported</td>
+                            <td>Uncompressed PCM</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">OGG</th>
+                            <td>Supported</td>
+                            <td>Vorbis and related containers</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">M4A</th>
+                            <td>Supported</td>
+                            <td>AAC in an MPEG-4 container</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Operating systems</th>
+                            <td>Windows 10+, Linux x64 / arm64</td>
+                            <td>Built with .NET 9 / Avalonia</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Dependencies</th>
+                            <td>libvlc / VLC on Linux</td>
+                            <td>Windows builds ship the libraries</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Graphics</th>
+                            <td>GPU with shader support</td>
+                            <td>Required for the audio-reactive visualizer</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Network</th>
+                            <td>Not required for playback</td>
+                            <td>Only needed to sync devices</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+        <section class="repo" aria-labelledby="repo-title">
+            <h2 class="section-title" id="repo-title">Source code</h2>
+            <article class="repo-card">
+                <span class="repo-card__badge">Open Source</span>
+                <p class="repo-card__eyebrow">GitHub</p>
+                <h3 class="repo-card__title">TrippySunny / Sonoric</h3>
+                <p class="repo-card__text">Player repository: MIT license, Linux install scripts, UI and visualizer source. Builds are published under Releases.</p>
+                <a class="button button--primary" href="https://github.com/TrippySunny/Sonoric">Open repository</a>
+            </article>
+        </section>
+    </main>
+    <footer class="site-footer">
+        <div class="site-footer__inner">
+            <p class="site-footer__copy">© 2026 Sonoric. Free open-source player.</p>
+            <ul class="site-footer__list">
+                <li class="site-footer__item"><a class="site-footer__link" href="product.html">Player</a></li>
+                <li class="site-footer__item"><a class="site-footer__link" href="order.html">Bugs &amp; ideas</a></li>
+                <li class="site-footer__item"><a class="site-footer__link" href="contacts.html">Contact</a></li>
+                <li class="site-footer__item"><a class="site-footer__link" href="https://github.com/TrippySunny/Sonoric">GitHub</a></li>
+            </ul>
+        </div>
+    </footer>
+</body>
+</html>

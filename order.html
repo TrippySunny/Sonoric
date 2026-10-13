@@ -3,8 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Отправьте баг-репорт или идею для Sonoric: шейдеры, библиотека, новые функции плеера.">
+    <meta name="description" content="Отправьте баг-репорт или идею для Sonoric через GitHub Issues.">
     <title>Sonoric — баги и идеи</title>
+    <link rel="alternate" hreflang="ru" href="order.html">
+    <link rel="alternate" hreflang="en" href="en/order.html">
     <link rel="stylesheet" href="css/style.css">
     <script src="js/main.js" defer></script>
 </head>
@@ -23,36 +25,43 @@
                 </svg>
                 <span class="site-logo__name">Sonoric</span>
             </a>
-            <nav class="site-nav" aria-label="Основная навигация">
-                <ul class="site-nav__list">
-                    <li class="site-nav__item">
-                        <a class="site-nav__link" href="index.html">Главная</a>
-                    </li>
-                    <li class="site-nav__item">
-                        <a class="site-nav__link" href="index.html#features">Преимущества</a>
-                    </li>
-                    <li class="site-nav__item">
-                        <a class="site-nav__link" href="product.html">Плеер</a>
-                    </li>
-                    <li class="site-nav__item">
-                        <a class="site-nav__link site-nav__link--current" href="order.html" aria-current="page">Баги и идеи</a>
-                    </li>
-                    <li class="site-nav__item">
-                        <a class="site-nav__link" href="contacts.html">Контакты</a>
-                    </li>
-                </ul>
-            </nav>
+            <div class="site-header__tools">
+                <nav class="site-nav" aria-label="Основная навигация">
+                    <ul class="site-nav__list">
+                        <li class="site-nav__item">
+                            <a class="site-nav__link" href="index.html">Главная</a>
+                        </li>
+                        <li class="site-nav__item">
+                            <a class="site-nav__link" href="index.html#features">Преимущества</a>
+                        </li>
+                        <li class="site-nav__item">
+                            <a class="site-nav__link" href="product.html">Плеер</a>
+                        </li>
+                        <li class="site-nav__item">
+                            <a class="site-nav__link site-nav__link--current" href="order.html" aria-current="page">Баги и идеи</a>
+                        </li>
+                        <li class="site-nav__item">
+                            <a class="site-nav__link" href="contacts.html">Контакты</a>
+                        </li>
+                    </ul>
+                </nav>
+                <nav class="lang-switch" aria-label="Язык">
+                    <a class="lang-switch__link lang-switch__link--current" href="order.html" hreflang="ru" lang="ru" aria-current="true">RU</a>
+                    <a class="lang-switch__link" href="en/order.html" hreflang="en" lang="en">EN</a>
+                </nav>
+            </div>
         </div>
     </header>
     <main id="main">
         <header class="page-hero">
-            <p class="page-hero__eyebrow">Feedback</p>
+            <p class="page-hero__eyebrow">Обратная связь</p>
             <h1 class="page-hero__title">Баги и идеи</h1>
-            <p class="page-hero__text">Нашли сбой в библиотеке, хотите другой шейдер или новую фичу — опишите это здесь. Форма уходит разработчику TrippySunny.</p>
+            <p class="page-hero__text">Форма открывает публичный тикет в GitHub Issues репозитория Sonoric. Нужен аккаунт GitHub. Не пишите пароли и лишние персональные данные.</p>
         </header>
         <section class="feedback" aria-labelledby="feedback-title">
             <h2 class="visually-hidden" id="feedback-title">Форма обращения</h2>
-            <form class="feedback-form" id="feedback" action="#" method="post">
+            <form class="feedback-form" id="feedback" action="https://github.com/TrippySunny/Sonoric/issues/new" method="get">
+                <p class="feedback-form__note">Тикеты уходят сюда: <a href="https://github.com/TrippySunny/Sonoric/issues">github.com/TrippySunny/Sonoric/issues</a></p>
                 <div class="feedback-form__field">
                     <label class="feedback-form__label" for="name">Имя <span class="feedback-form__required">*</span></label>
                     <input class="feedback-form__input" id="name" name="name" type="text" autocomplete="name" required>
@@ -69,9 +78,8 @@
                     <label class="feedback-form__label" for="topic">Тема обращения <span class="feedback-form__required">*</span></label>
                     <select class="feedback-form__select" id="topic" name="topic" required>
                         <option value="">Выберите тему</option>
-                        <option value="bug">Нашел баг</option>
-                        <option value="shaders">Предложение по шейдерам</option>
-                        <option value="feature">Идея для фичи</option>
+                        <option value="bug">Нашёл баг</option>
+                        <option value="feature">Идея для функции</option>
                     </select>
                 </div>
                 <div class="feedback-form__field feedback-form__field--wide">
@@ -80,15 +88,15 @@
                 </div>
                 <div class="feedback-form__consent">
                     <input class="feedback-form__checkbox" id="consent" name="consent" type="checkbox" required>
-                    <label class="feedback-form__consent-label" for="consent">Согласен на обработку персональных данных <span class="feedback-form__required">*</span></label>
+                    <label class="feedback-form__consent-label" for="consent">Согласен на обработку персональных данных и на публикацию обращения в GitHub Issues <span class="feedback-form__required">*</span></label>
                 </div>
-                <button class="button button--success feedback-form__submit" type="submit">Отправить</button>
+                <button class="button button--success feedback-form__submit" type="submit">Отправить в GitHub</button>
             </form>
         </section>
     </main>
     <footer class="site-footer">
         <div class="site-footer__inner">
-            <p class="site-footer__copy">© 2026 Sonoric. Бесплатный open-source плеер.</p>
+            <p class="site-footer__copy">© 2026 Sonoric. Бесплатный плеер с открытым исходным кодом.</p>
             <ul class="site-footer__list">
                 <li class="site-footer__item"><a class="site-footer__link" href="product.html">Плеер</a></li>
                 <li class="site-footer__item"><a class="site-footer__link" href="order.html">Баги и идеи</a></li>
